@@ -89,7 +89,9 @@ export class RunnerScene extends Phaser.Scene {
 
     this.runner = this.add.image(0, 0, "runner").setDepth(20);
     this.scale.on("resize", () => this.fit());
-    this.loadDistrict(0);
+    // ?district=N starts at district N (for testing and for showing one puzzle).
+    const d = Number(new URLSearchParams(location.search).get("district")) - 1;
+    this.loadDistrict(d >= 0 && d < LEVELS.length ? d : 0);
     // Listen only once a level is loaded: a peer that is already connected triggers a snapshot at once.
     this.net.onMessage((m) => this.onMsg(m));
     this.net.onStatus((s) => { this.status = s; this.hud.net(s, this.peer); });
