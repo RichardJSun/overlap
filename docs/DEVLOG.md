@@ -116,7 +116,7 @@ Richard's notes, also done:
 - **The lantern grows.** It starts every district at 3 tiles and reaches one tile farther per substation powered, up to 5. The solver models the reach, so all three districts are still proven solvable. A flare throws the light about twice as far for a second, as a visual only, so a gate or drone can never vanish under the Runner when the flare fades.
 - We turned down random lights-out events, because they would drop players off bridges for no reason of their own, and the solver can't prove timed events fair.
 
-## 15:45 Five districts, and a new demo
+## 15:30 Five districts, and a new demo
 - **District 4, "Signal Yard"** (from the Mythos review). The Runner brings blue and red, and the city has only green. A slow red drone crosses the plaza in front of the cyan bridge, and no streetlight can show it, so this is the first district where the Guide's lights can't help and only their danger pings can.
 - **District 5, "Grid Central".** The Runner brings only red, and the city has green and blue. A yellow drone exists only where the Runner's red meets a green streetlight, which makes "overlap" a hazard and not just a key. The last door needs white, so the Guide parks two streetlights over the door and the Runner brings the third color.
 - Both are solver-proven like the rest: solvable within budget, unsolvable without the Guide, every gate and filter necessary. **Autoplay across all five districts took 82 s, 292 actions, and zero catches.**
