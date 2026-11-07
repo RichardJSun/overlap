@@ -1,7 +1,7 @@
 import type { Grid } from "../shared/lighting.ts";
 
 const RAYS = 360;
-const BLEED = 0.18; // tiles a ray pushes into the wall it hits, so lit wall faces glow
+const BLEED = 0.3; // tiles a ray pushes into the wall it hits, so lit wall faces and facades catch light
 
 /**
  * Visibility polygon around (cx, cy) in tile units (tile centers are at +0.5), clipped to `radius`.

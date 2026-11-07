@@ -6,6 +6,21 @@ export const PAL = {
   night: 0x0b1020, wall: 0x1b2238, wallEdge: 0x2c3758, street: 0x141a2e, warm: 0xffd38a, text: 0xe8ecff,
 };
 
+// Lightmap color per primary (blue, green, red bits). Off-channels are the palette's, scaled down so
+// that overlaps stay saturated: red + blue sums to magenta instead of washing out to pink-white.
+const PRIM = [[0.135, 0.245, 1], [0.135, 1, 0.24], [1, 0.135, 0.165]];
+export function lightTint(c: number) {
+  const rgb = [0, 0, 0];
+  for (let b = 0; b < 3; b++) if (c & (1 << b)) for (let i = 0; i < 3; i++) rgb[i] += PRIM[b][i];
+  return rgb.reduce((a, v) => (a << 8) | Math.round(Math.min(1, v) * 255), 0);
+}
+
+/** Light falloff at t = distance / radius: bright core, flat enough that the last lit tile reads, zero at the edge. */
+export function falloff(t: number) {
+  const s = Math.min(1, Math.max(0, (1 - t) / 0.3));
+  return (1 - 0.55 * t) * s * s * (3 - 2 * s);
+}
+
 /**
  * Every procedural texture the game uses. Keys:
  *   street, wall, gap, exit, exit-open, substation, substation-on, runner, guide, ping, soft,
@@ -68,8 +83,9 @@ export function makeTextures(scene: Phaser.Scene) {
     g.fillStyle(0xffffff).fillCircle(32, 32, 6);
   });
   tex("lamp-off", T, T, () => lamp(g, 0x50587a, false));
-  // Soft radial dot for glows (concentric discs approximate a gradient).
-  tex("soft", 64, 64, () => { for (let r = 32; r > 0; r -= 2) g.fillStyle(0xffffff, 0.06).fillCircle(32, 32, r); });
+  // Opaque white-to-black falloff for light pools, and a transparent soft dot for glows.
+  radial(scene, "light-falloff", 256, (t) => { const v = Math.round(falloff(t) * 255); return [v, v, v, 255]; });
+  radial(scene, "soft", 64, (t) => [255, 255, 255, Math.round(Math.max(0, 1 - t) ** 2 * 255)]);
 
   for (let c = 1; c < 8; c++) {
     const col = hex(c);
@@ -96,6 +112,16 @@ export function makeTextures(scene: Phaser.Scene) {
     });
   }
   g.destroy();
+}
+
+/** Canvas texture whose pixel at normalized radius t (0 center, 1 edge) is `px(t)` as RGBA. */
+function radial(scene: Phaser.Scene, key: string, size: number, px: (t: number) => number[]) {
+  const ct = scene.textures.createCanvas(key, size, size)!;
+  const img = ct.context.createImageData(size, size), h = size / 2;
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) img.data.set(px(Math.hypot(x + 0.5 - h, y + 0.5 - h) / h), (y * size + x) * 4);
+  ct.context.putImageData(img, 0, 0);
+  ct.refresh();
 }
 
 function lamp(g: Phaser.GameObjects.Graphics, col: number, on: boolean) {

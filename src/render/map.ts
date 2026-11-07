@@ -1,6 +1,25 @@
 import Phaser from "phaser";
 import { TILE, type Level } from "../shared/level.ts";
 
+type Block = { x: number; y: number; w: number; h: number };
+type Rect = { x: number; y: number; w: number; h: number };
+
+/** Height in px of the south facade strip drawn on a wall tile that faces a street. */
+export const FACADE = 11;
+const winCache = new WeakMap<Block, Rect[]>();
+
+/** Facade windows (pixel rects) on the street-facing walls inside `b`. Shared by the art and the lightmap. */
+export function windowsIn(level: Level, b: Block): Rect[] {
+  let out = winCache.get(b);
+  if (out) return out;
+  out = [];
+  for (let y = b.y; y < b.y + b.h; y++)
+    for (let x = b.x; x < b.x + b.w; x++)
+      if (level.solid(x, y) && !level.solid(x, y + 1)) for (const ox of [6, 19]) out.push({ x: x * TILE + ox, y: y * TILE + TILE - 8, w: 7, h: 5 });
+  winCache.set(b, out);
+  return out;
+}
+
 /** Static district art plus the sprites whose state changes: lamps, gates, substations, exit. */
 export class MapView {
   readonly base: Phaser.GameObjects.Container;
