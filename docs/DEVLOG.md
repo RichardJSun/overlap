@@ -75,7 +75,7 @@ Mistake of the hour: a scratch worktree's `node_modules` was a symlink, which th
 
 ![Tutorial, both roles](shots/tut-flared.png)
 
-## 14:10 Redesigned districts, demo video, production checks
+## 14:05 Redesigned districts, demo video, production checks
 - **Districts 2 and 3 rebuilt around filters.** District 2's only way out of the start yard is green glass, and the green lantern plus a blue streetlight raises a cyan bridge. Then the Runner needs red for the yellow door, so the Guide supplies it. District 3 needs both glasses in order, a two-light cyan bridge, and two locks. Every crossing has a second lane and a streetlight camera over it, and no catch sends the Runner back across the canal. A test removes each filter in turn and checks the district breaks or gets longer.
 - **Autoplay, all three districts:** 52 s, 162 actions, **zero catches**, no console errors. The old district 3 took 157 s with 30 catches.
 - **Demo video** (`scripts/record-demo.mjs`): 90 s at 1440×810. It records the title and a `?local=1` playthrough in headless Chromium. Playwright can't record audio, so every sound call is logged with a timestamp and re-rendered afterwards through an `OfflineAudioContext` with the game's own synth code, then muxed with ffmpeg. The sound in the video is exactly what the game plays.
