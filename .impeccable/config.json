@@ -1,0 +1,107 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.798Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.823Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.848Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.872Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.896Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.921Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.945Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.970Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:45.993Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "organic-clip-path",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:46.017Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mockups.html"
+        ],
+        "createdAt": "2026-11-07T21:52:46.040Z",
+        "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      }
+    ]
+  }
+}

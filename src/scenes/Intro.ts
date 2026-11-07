@@ -144,7 +144,7 @@ export class IntroScene extends Phaser.Scene {
     body.textContent = line;
     top.style.cssText = big
       ? `font:700 clamp(44px,8vw,96px)/1 ${din};letter-spacing:.12em;color:#ffd38a`
-      : `display:inline-block;padding-bottom:4px;border-bottom:1px solid #ffd38a;font:600 13px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;color:#ffd38a`;
+      : `display:inline-block;padding-bottom:4px;border-bottom:1px solid #ffd38a;font:700 15px/1 ${din};letter-spacing:.14em;text-transform:uppercase;color:#ffd38a`;
     body.style.cssText = big ? "margin-top:12px;font:16px/1.4 system-ui,sans-serif;color:#a9b1d6" : "margin-top:10px;font:500 clamp(16px,1.6vw,20px)/1.4 system-ui,sans-serif";
     this.text.replaceChildren(top, body);
   }

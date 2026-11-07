@@ -34,7 +34,7 @@ const CSS = `
 .hud .note{position:absolute;left:50%;top:54px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 32px),500px);
   display:flex;flex-direction:column;gap:5px;text-shadow:var(--lift);transform:translate(-50%,0);transition:opacity .3s ease,transform .4s var(--ease)}
 .hud .note.off{opacity:0;transform:translate(-50%,-6px)}
-.hud .note .lbl{align-self:flex-start;font:600 11.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--amber);
+.hud .note .lbl{align-self:flex-start;font:700 14px/1 var(--din);font-stretch:condensed;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);
   padding-bottom:4px;border-bottom:1px solid var(--amber);white-space:nowrap}
 .hud .note .say{text-wrap:pretty}
 .hud .intro .lbl{color:var(--dim);border-color:var(--dim)}
@@ -62,7 +62,7 @@ const CSS = `
 .hud .tb{display:flex;box-sizing:border-box;border:1.5px solid var(--ink);background:rgba(11,16,32,.92)}
 .hud .cell{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;padding:0 12px;border-left:1px solid rgba(232,236,255,.45)}
 .hud .cell:first-child{border-left:0}
-.hud .k{font:600 9.5px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.hud .k{font:600 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
 .hud .v{display:flex;align-items:center;gap:8px}
 .hud .obj{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .hud .objective.done .k{color:var(--green)}

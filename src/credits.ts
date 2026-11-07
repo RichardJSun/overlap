@@ -9,7 +9,7 @@ const CSS = `
 .cr-log b{font-weight:600;color:var(--amber);border-bottom:1px solid var(--amber);margin-right:8px}
 .cr-tb{display:flex;flex-wrap:wrap;border:1.5px solid var(--ink);background:#0b1020}
 .cr-cell{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:7px 12px;box-shadow:inset -1px -1px 0 var(--line);min-width:0}
-.cr-k{font:600 9.5px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7d87b2}
+.cr-k{font:600 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7d87b2}
 .cr-v{font:700 16px/1 var(--din);font-stretch:condensed;letter-spacing:.08em;text-transform:uppercase;padding-top:2px;white-space:nowrap}
 .cr-v.wm{color:var(--amber)}
 .cr button{margin-left:auto;align-self:stretch;min-height:44px;padding:2px 22px 0;font:700 18px/1 var(--din);font-stretch:condensed;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);

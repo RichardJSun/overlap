@@ -86,11 +86,11 @@ function lantern(root: HTMLElement, h: HTMLElement) {
 }
 
 /** The title sheet's one-line diagram: the three lights that light the wordmark, drawn as lamps on a bus. */
-const BUS = `<svg viewBox="0 0 460 176" fill="none" stroke="#e8ecff" stroke-width="1.5" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">
-  <path d="M0 34H460"/><text x="0" y="20" fill="#a9b1d6" stroke="none" font-family="system-ui,sans-serif" font-size="11" letter-spacing="1.6">BUS A · CANAL STREET</text>
-  <g><path d="M70 34V70"/><rect x="62" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M70 86V118"/><circle cx="70" cy="134" r="16" stroke="#ff4d5e"/><path d="M59 123l22 22M81 123l-22 22" stroke="#ff4d5e"/><text x="46" y="172" fill="#a9b1d6" stroke="none">LANTERN</text></g>
-  <g><path d="M230 34V70"/><rect x="222" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M230 86V118"/><circle cx="230" cy="134" r="16" stroke="#4d8bff"/><path d="M219 123l22 22M241 123l-22 22" stroke="#4d8bff"/><text x="222" y="172" fill="#a9b1d6" stroke="none">L1</text></g>
-  <g><path d="M390 34V70"/><rect x="382" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M390 86V118"/><circle cx="390" cy="134" r="16" stroke="#4dff88"/><path d="M379 123l22 22M401 123l-22 22" stroke="#4dff88"/><text x="382" y="172" fill="#a9b1d6" stroke="none">L2</text></g>
+const BUS = `<svg viewBox="0 0 460 180" fill="none" stroke="#e8ecff" stroke-width="1.5" font-family="'DIN Condensed',Bahnschrift,'Roboto Condensed','Arial Narrow',sans-serif" font-size="19" font-weight="700" letter-spacing="1">
+  <path d="M0 34H460"/><text x="0" y="20" fill="#a9b1d6" stroke="none" font-size="18" letter-spacing="2">BUS A · CANAL STREET</text>
+  <g><path d="M70 34V70"/><rect x="62" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M70 86V118"/><circle cx="70" cy="134" r="16" stroke="#ff4d5e"/><path d="M59 123l22 22M81 123l-22 22" stroke="#ff4d5e"/><text x="40" y="176" fill="#a9b1d6" stroke="none">LANTERN</text></g>
+  <g><path d="M230 34V70"/><rect x="222" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M230 86V118"/><circle cx="230" cy="134" r="16" stroke="#4d8bff"/><path d="M219 123l22 22M241 123l-22 22" stroke="#4d8bff"/><text x="222" y="176" fill="#a9b1d6" stroke="none">L1</text></g>
+  <g><path d="M390 34V70"/><rect x="382" y="70" width="16" height="16" fill="#ffd38a" stroke="#ffd38a"/><path d="M390 86V118"/><circle cx="390" cy="134" r="16" stroke="#4dff88"/><path d="M379 123l22 22M401 123l-22 22" stroke="#4dff88"/><text x="382" y="176" fill="#a9b1d6" stroke="none">L2</text></g>
 </svg>`;
 
 const cellLabel = (text: string) => el("span", { className: "ov-k", textContent: text });
@@ -106,7 +106,11 @@ export function showTitle(root: HTMLElement, start: Start): void {
   bus.innerHTML = BUS;
   bus.setAttribute("aria-hidden", "true");
   const body = el("div", { className: "ov-body" });
-  const main = el("main", { className: "ov-main" }, el("div", { className: "ov-head" }, h, bus), body);
+  const zones = el("div", { className: "ov-zones" });
+  zones.setAttribute("aria-hidden", "true");
+  const zone = (text: string, css: string) => { const s = el("span", { textContent: text }); s.style.cssText = css; return s; };
+  zones.append(...["A", "B", "C", "D"].map((z, i) => zone(z, `left:${12.5 + i * 25}%;top:-7px`)), ...["1", "2"].map((z, i) => zone(z, `top:${25 + i * 50}%;left:-5px`)));
+  const main = el("main", { className: "ov-main" }, zones, el("div", { className: "ov-head" }, h, bus), body);
   const wrap = el("div", { className: "ov" }, el("style", { textContent: CSS }), main);
   root.append(wrap);
   lantern(wrap, h);
@@ -132,13 +136,13 @@ export function showTitle(root: HTMLElement, start: Start): void {
   );
 
   const block = el("section", { className: "ov-tb" },
-    el("div", { className: "ov-cell ov-cell-run" }, cellLabel("Field"), runnerBtn,
+    el("div", { className: "ov-cell ov-cell-run" }, runnerBtn,
       el("p", { className: "ov-help", textContent: "Opens a room. Your Guide joins from a second computer, a phone, or another tab." })),
     el("div", { className: "ov-cell ov-cell-wide" }, form),
-    el("div", { className: "ov-cell ov-cell-wide" }, cellLabel("Solo"), el("a", { className: "ov-local", href: "?local=1", textContent: "Both roles on one screen" })),
-    el("div", { className: "ov-cell" }, cellLabel("Project"), cellValue("Overlap")),
-    el("div", { className: "ov-cell" }, cellLabel("Sheet"), cellValue("00 of 06")),
-    el("div", { className: "ov-cell" }, cellLabel("Drawn"), cellValue("Night dispatch")),
+    el("div", { className: "ov-cell ov-cell-wide" }, el("a", { className: "ov-local", href: "?local=1", textContent: "Play both roles on one screen" })),
+    el("div", { className: "ov-cell" }, cellLabel("Players"), cellValue("Two")),
+    el("div", { className: "ov-cell" }, cellLabel("Screens"), cellValue("One or two")),
+    el("div", { className: "ov-cell" }, cellLabel("Districts"), cellValue("Six")),
   );
   block.setAttribute("aria-label", "Start");
 
@@ -224,7 +228,7 @@ export function showTitle(root: HTMLElement, start: Start): void {
           copy),
         el("div", { className: "ov-cell ov-cell-wide" }, startNow, el("p", { className: "ov-help", textContent: "Your Guide can join mid-run." })),
       ),
-      el("figure", { className: "ov-plate" }, el("span", { className: "ov-k", textContent: "Detail A" }), qr, el("figcaption", { textContent: "On a phone? Scan to join as Guide" })),
+      el("figure", { className: "ov-plate" }, qr, el("figcaption", { textContent: "On a phone? Scan to join as Guide" })),
     );
     startNow.focus({ preventScroll: true });
   });
@@ -244,11 +248,14 @@ const CSS = `
 .ov-main { box-sizing: border-box; min-height: calc(100% - 2 * clamp(10px, 2vw, 22px)); max-width: 1240px; margin: clamp(10px, 2vw, 22px) auto;
   display: flex; flex-direction: column; justify-content: center; gap: clamp(24px, 4vh, 44px);
   padding: clamp(22px, 4vh, 44px) clamp(18px, 4vw, 52px) calc(28px + env(safe-area-inset-bottom));
-  border: 1.5px solid rgba(232, 236, 255, .85); outline: 1px solid rgba(232, 236, 255, .28); outline-offset: -9px; background: rgba(11, 16, 32, .55); }
+  border: 1.5px solid rgba(232, 236, 255, .85); outline: 1px solid rgba(232, 236, 255, .28); outline-offset: -9px; background: rgba(11, 16, 32, .55); position: relative; }
+/* Zone letters sit in the gap between the two border lines, like on a drawing sheet. */
+.ov-zones { position: absolute; inset: 0; pointer-events: none; }
+.ov-zones span { position: absolute; transform: translate(-50%, 0); font: 700 12px/1 var(--din); letter-spacing: .1em; color: var(--faint); background: var(--night); padding: 1px 4px 0; }
+@media (max-width: 599px) { .ov-zones { display: none; } }
 .ov-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
-.ov-bus { flex: 0 1 400px; min-width: 220px; margin-top: clamp(12px, 3vh, 36px); }
+.ov-bus { flex: 0 1 400px; min-width: 260px; margin: clamp(12px, 3vh, 36px) 8px 0 0; }
 .ov-bus svg { display: block; width: 100%; height: auto; }
-.ov.lobby .ov-bus { flex-basis: 300px; }
 
 /* The sign: an unlit word, then one copy per light, each masked to its pool. Overlaps get the mixed color. */
 .ov-sign { --rad: .6em; --lx: 42%; --ly: 50%;
@@ -287,7 +294,7 @@ const CSS = `
 .ov-tb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1.5px solid var(--ink); background: var(--night); }
 .ov-cell { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 14px; box-shadow: inset -1px -1px 0 var(--line); }
 .ov-cell-run, .ov-cell-wide { grid-column: 1 / -1; }
-.ov-k { font: 600 10px/1 system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+.ov-k { font: 600 11px/1 system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
 .ov-v { font: 700 17px/1 var(--din); font-stretch: condensed; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); padding-top: 2px; }
 .ov-help { margin: 0; font-size: 13px; color: var(--faint); }
 
