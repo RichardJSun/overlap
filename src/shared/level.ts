@@ -1,4 +1,4 @@
-import { reveals, type ColorMask } from "./color.ts";
+import { NAMES, reveals, type ColorMask } from "./color.ts";
 import { sourceField, type Grid, type LightSource } from "./lighting.ts";
 import type { Vec } from "./protocol.ts";
 
@@ -77,11 +77,15 @@ export function validateLevel(j: LevelJson): string[] {
   const ids = new Set<string>();
   const uniq = (id: string) => { if (ids.has(id)) e.push(`duplicate id ${id}`); ids.add(id); };
   color(j.lantern, "lantern");
+  // The Runner's glass is the only source of its colors, so no streetlight may share a channel with them.
+  const lanternColors = (j.filters ?? []).reduce((m, f) => m | f.color, j.lantern);
   if (!(j.budget >= 0) || !(j.budgetPerSubstation >= 0)) e.push("budget values must be >= 0");
   for (const l of j.lights) {
     uniq(l.id); color(l.color, `light ${l.id}`);
     if (!inside(l.x, l.y)) e.push(`light ${l.id} is outside the map`);
     if (!(l.radius >= 1 && l.radius <= 6)) e.push(`light ${l.id} radius ${l.radius} out of range`);
+    const shared = l.color & lanternColors;
+    if (shared) e.push(`streetlight ${l.id} is ${NAMES[l.color & 7]}, and the Runner's lantern can also be ${NAMES[shared]}; the glass must give colors the city lacks`);
   }
   for (const g of j.gates) {
     color(g.color, `gate at ${g.x},${g.y}`);
