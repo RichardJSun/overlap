@@ -79,10 +79,10 @@ export class MapView {
     this.base = scene.add.container(0, 0, items);
     for (const gt of level.gates) {
       const img = scene.add.image(T / 2, T / 2, `${gt.kind}-${gt.color}`);
-      // Both textures span left to right. Turn a bridge unless there is water above and below it (a north-south
-      // canal, even a wide one), and turn a door whose street runs east-west between buildings.
-      const water = (dy: number) => level.at(gt.x, gt.y + dy) === "~";
-      if (gt.kind === "bridge" ? !(water(-1) && water(1)) : level.solid(gt.x, gt.y - 1) && level.solid(gt.x, gt.y + 1)) img.setAngle(90);
+      // Both textures span left to right. Turn a bridge when more water runs beside it than above and below
+      // (an east-west canal), and turn a door whose street runs east-west between buildings.
+      const w = (dx: number, dy: number) => +(level.at(gt.x + dx, gt.y + dy) === "~");
+      if (gt.kind === "bridge" ? w(0, -1) + w(0, 1) < w(-1, 0) + w(1, 0) : level.solid(gt.x, gt.y - 1) && level.solid(gt.x, gt.y + 1)) img.setAngle(90);
       scene.tweens.add({ targets: img, alpha: 0.82, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       const parts: Phaser.GameObjects.GameObject[] = [img];
       if (opts.glyphs) parts.push(scene.add.image(T - 8, 8, `glyph-${gt.color}`));
