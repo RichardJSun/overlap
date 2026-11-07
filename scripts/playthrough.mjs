@@ -28,7 +28,12 @@ const expectAt = async (x, y, label) => {
 };
 
 await shot("d1-start");
-await walk("DDDD RRRRRRRRR DD");
+await walk("DDDD");
+await shot("tut-flare");
+await page.keyboard.press("Space");
+await page.waitForTimeout(400);
+await shot("tut-flared");
+await walk("RRRRRRRRR DD");
 await expectAt(11, 8, "reached the canal");
 await walk("R");
 await expectAt(11, 8, "bridge must be hidden without blue light");

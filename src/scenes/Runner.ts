@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { sfx } from "../audio/sfx.ts";
 import type { SceneData } from "../game.ts";
 import { Hud } from "../hud.ts";
+import { Tutor } from "../tutorial.ts";
 import { LEVELS } from "../levels/index.ts";
 import type { NetStatus, Transport } from "../net/transport.ts";
 import { LightLayer } from "../render/lights.ts";
@@ -50,6 +51,8 @@ export class RunnerScene extends Phaser.Scene {
   private lastFlare = -Infinity;
   private transitioning = false;
   private awake = false;
+  private tutor!: Tutor;
+  private coach = { moved: 0, flared: false, pinged: false };
 
   private map?: MapView;
   private lightLayer?: LightLayer;
@@ -76,6 +79,7 @@ export class RunnerScene extends Phaser.Scene {
     addPost(this, "runner");
     this.hud = new Hud(this.game.canvas.parentElement!, "runner", this.data_.room);
     this.events.once("shutdown", () => this.hud.destroy());
+    this.tutor = new Tutor(this, this.hud, "runner");
     const kb = this.input.keyboard!;
     kb.on("keydown", (e: KeyboardEvent) => {
       this.wake();
@@ -149,6 +153,8 @@ export class RunnerScene extends Phaser.Scene {
     this.fit();
     this.hud.district(i, this.level.name, this.level.intro);
     this.updateObjective();
+    this.coach = { moved: 0, flared: false, pinged: false };
+    this.tutor.setDistrict(i);
     if (this.awake) sfx.ambient(this.progress);
   }
 
@@ -193,6 +199,7 @@ export class RunnerScene extends Phaser.Scene {
       return;
     }
     this.moving = true;
+    this.coach.moved++;
     this.pos = { x: nx, y: ny };
     this.refreshField();
     this.net.send({ t: "runner_move", p: this.pos });
@@ -280,6 +287,7 @@ export class RunnerScene extends Phaser.Scene {
     if (this.transitioning) return;
     if (this.time.now - this.lastFlare < FLARE_COOLDOWN) { this.hud.toast("Flare recharging…", 900); return; }
     this.lastFlare = this.time.now;
+    this.coach.flared = true;
     this.net.send({ t: "flare", p: this.pos });
     sfx.ping();
     const ring = this.add.image(this.runner.x, this.runner.y, "ping").setDepth(30).setScale(0.3).setTint(0xffd38a).setBlendMode(Phaser.BlendModes.ADD);
@@ -304,6 +312,7 @@ export class RunnerScene extends Phaser.Scene {
       if (!this.canEnter(this.pos.x, this.pos.y)) this.respawn(this.level.at(this.pos.x, this.pos.y) === "~" ? "The bridge vanished under you." : "The door closed on you.");
     } else if (m.t === "ping") {
       this.showPing(m.p);
+      this.coach.pinged = true;
       sfx.ping();
     }
   }
@@ -371,6 +380,14 @@ export class RunnerScene extends Phaser.Scene {
       const d = this.queued.shift() ?? this.held.at(-1) ?? (this.target ? this.stepToward(this.target) : null);
       if (d) this.tryMove(d); else this.target = null;
     }
+
+    const at = (p: Vec) => this.field[p.y * this.level.w + p.x];
+    this.tutor.update({
+      level: this.level, runner: this.pos, ...this.coach, lampsOn: this.lightsOn.size, powered: this.powered.size, seen: true,
+      bridgeOpen: this.level.gates.some((g) => g.kind === "bridge" && reveals(at(g), g.color)),
+      filterInView: this.level.filters.find((f) => at(f) && f.color !== this.lantern) ?? null,
+      unseenDrone: null,
+    });
 
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
     const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn, this.lantern);

@@ -1,0 +1,108 @@
+import Phaser from "phaser";
+import type { Hud } from "./hud.ts";
+import { TILE, type Level } from "./shared/level.ts";
+import type { Role, Vec } from "./shared/protocol.ts";
+
+/** What the coach needs to know each frame. Flags like `flared` are sticky for the district. */
+export type TutorCtx = {
+  level: Level;
+  runner: Vec; // the runner's tile (for the guide: where they are, even off camera)
+  moved: number;
+  flared: boolean;
+  pinged: boolean; // guide sent / runner received a ping
+  lampsOn: number;
+  powered: number;
+  bridgeOpen: boolean;
+  seen: boolean; // guide: runner on camera
+  filterInView: Vec | null;
+  unseenDrone: Vec | null;
+};
+
+type Step = { text: string; target?: (c: TutorCtx) => Vec | undefined; done: (c: TutorCtx) => boolean; when?: (c: TutorCtx) => boolean };
+
+const near = (a: Vec, b: Vec, r: number) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= r;
+const bridge = (c: TutorCtx) => c.level.gates.find((g) => g.kind === "bridge");
+const sub = (c: TutorCtx) => c.level.substations[0];
+
+/** District 1 walks each role through its half of the game, one step at a time. */
+const TUTORIAL: Record<Role, Step[]> = {
+  runner: [
+    { text: "Walk with the arrow keys or WASD, or tap a tile. You only see what your lantern lights.", target: (c) => c.runner, done: (c) => c.moved >= 4 },
+    { text: "Your Guide sees the whole city, but sees you only under a lit streetlight. Press Space (or tap yourself) to flare and show them where you are.", target: (c) => c.runner, done: (c) => c.flared },
+    { text: "Talk to your Guide. Their pings show up even in the dark: head where they point.", done: (c) => c.pinged || c.moved >= 14 },
+    { text: "A bridge crosses the canal here, but only in magenta light. Red lantern + blue streetlight = magenta. Ask for blue!", target: (c) => bridge(c), when: (c) => !!bridge(c) && near(c.runner, bridge(c)!, 4), done: (c) => c.bridgeOpen || c.powered > 0 },
+    { text: "Cross, then find the substation ⚡. Powering it restores the block.", target: (c) => sub(c), done: (c) => c.powered > 0 },
+    { text: "The block is back on and the exit is lit. Go!", target: (c) => c.level.exit, done: () => false },
+  ],
+  guide: [
+    { text: "You run the grid. You see the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Ask them to flare.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
+    { text: "Tap any tile to ping it. The Runner sees pings even in the dark. Ping the bridge over the canal.", target: (c) => bridge(c), done: (c) => c.pinged },
+    { text: "Tap the blue streetlight to switch it on. Blue + the Runner's red lantern = magenta, and the bridge appears.", target: (c) => c.level.lights[0], done: (c) => c.lampsOn > 0 },
+    { text: "The streetlight is a camera too: you'll see the Runner when they're in its light. Guide them to the substation ⚡.", target: (c) => sub(c), done: (c) => c.powered > 0 },
+    { text: "Each substation gives you more power. Now talk them to the exit.", target: (c) => c.level.exit, done: () => false },
+  ],
+};
+
+/** Later districts: one-off tips that show the first time their situation comes up. */
+const HINTS: Record<Role, Step[]> = {
+  runner: [
+    { text: "Colored glass! Walk over a filter to change your lantern's color. Your Guide has to plan around it.", target: (c) => c.filterInView ?? undefined, when: (c) => !!c.filterInView, done: () => false },
+  ],
+  guide: [
+    { text: "Amber ring: a drone the Runner can't see. Light it in its own color, or ping a warning.", target: (c) => c.unseenDrone ?? undefined, when: (c) => !!c.unseenDrone, done: () => false },
+  ],
+};
+const HINT_MS = 7000;
+
+/** Shows the current coaching step in the HUD and bounces a pointer over its target tile. */
+export class Tutor {
+  private steps: Step[] = [];
+  private tutorial = false;
+  private shown?: Step;
+  private hintUntil = 0;
+  private seenHints = new Set<Step>();
+  private pointer: Phaser.GameObjects.Image;
+
+  constructor(private scene: Phaser.Scene, private hud: Hud, private role: Role) {
+    this.pointer = scene.add.image(0, 0, "pointer").setDepth(40).setVisible(false);
+  }
+
+  setDistrict(di: number) {
+    this.tutorial = di === 0;
+    this.steps = this.tutorial ? TUTORIAL[this.role] : HINTS[this.role];
+    this.show(undefined);
+  }
+
+  update(c: TutorCtx) {
+    const now = this.scene.time.now;
+    let step: Step | undefined;
+    if (this.tutorial) {
+      const i = this.steps.findIndex((s) => !s.done(c));
+      step = i >= 0 && (this.steps[i].when?.(c) ?? true) ? this.steps[i] : undefined;
+      if (step !== this.shown) this.show(step, step ? `${i + 1}/${this.steps.length}` : "");
+    } else {
+      if (this.shown && now > this.hintUntil) this.show(undefined);
+      if (!this.shown) {
+        step = this.steps.find((s) => !this.seenHints.has(s) && (s.when?.(c) ?? true));
+        if (step) { this.seenHints.add(step); this.hintUntil = now + HINT_MS; this.show(step, "Tip"); }
+      }
+      step = this.shown;
+    }
+    const t = step?.target?.(c);
+    this.pointer.setVisible(!!t);
+    if (t && (this.pointer.getData("tx") !== t.x || this.pointer.getData("ty") !== t.y)) {
+      // Re-seat the bounce over the new target tile.
+      this.pointer.setData({ tx: t.x, ty: t.y });
+      this.scene.tweens.killTweensOf(this.pointer);
+      this.pointer.setPosition(t.x * TILE + TILE / 2, t.y * TILE - 6);
+      this.scene.tweens.add({ targets: this.pointer, y: "-=8", duration: 420, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    }
+  }
+
+  private show(step: Step | undefined, label = "") {
+    this.shown = step;
+    this.hud.coach(step?.text ?? null, label);
+  }
+
+  destroy() { this.pointer.destroy(); }
+}

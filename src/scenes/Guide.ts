@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { sfx } from "../audio/sfx.ts";
 import type { SceneData } from "../game.ts";
 import { Hud } from "../hud.ts";
+import { Tutor } from "../tutorial.ts";
 import { LEVELS } from "../levels/index.ts";
 import type { NetStatus, Transport } from "../net/transport.ts";
 import { LightLayer } from "../render/lights.ts";
@@ -39,6 +40,8 @@ export class GuideScene extends Phaser.Scene {
   private lastSeenPos: Vec = { x: 0, y: 0 };
   private clockStart: number | null = null;
   private awake = false;
+  private tutor!: Tutor;
+  private coach = { pinged: false, flared: false };
 
   private map?: MapView;
   private lightLayer?: LightLayer;
@@ -58,6 +61,7 @@ export class GuideScene extends Phaser.Scene {
     addPost(this, "guide");
     this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room);
     this.events.once("shutdown", () => this.hud.destroy());
+    this.tutor = new Tutor(this, this.hud, "guide");
     this.net.onMessage((m) => this.onMsg(m));
     this.net.onStatus((s) => { this.status = s; this.hud.net(s, this.peer); });
     this.net.onPeer((c) => {
@@ -107,6 +111,8 @@ export class GuideScene extends Phaser.Scene {
     this.lastSeenAt = this.time.now;
     this.lastSeenPos = { ...this.level.start };
     this.fit();
+    this.coach = { pinged: false, flared: false };
+    this.tutor.setDistrict(i);
     this.hud.district(i, this.level.name, this.level.intro);
     this.hud.hint(`Tap a streetlight to switch it · tap elsewhere to ping · you see the Runner only under a lit streetlight or in a powered block${this.level.drones.length ? " · amber ring: a drone the Runner can't see" : ""}`);
     this.redraw();
@@ -153,6 +159,7 @@ export class GuideScene extends Phaser.Scene {
     const tile = { x: Math.floor(fx), y: Math.floor(fy) };
     if (this.time.now - this.lastPing < PING_COOLDOWN) { this.hud.toast("Ping recharging…", 900); return; }
     this.lastPing = this.time.now;
+    this.coach.pinged = true;
     this.hud.ping(PING_COOLDOWN);
     this.net.send({ t: "ping", id: Math.random().toString(36).slice(2, 8), p: tile });
     if (!this.data_.local) sfx.ping();
@@ -227,6 +234,7 @@ export class GuideScene extends Phaser.Scene {
       case "flare":
         this.moveRunner(m.p, false);
         this.flareUntil = this.time.now + FLARE_MS;
+        this.coach.flared = true;
         this.showPing(m.p, 0xffd38a);
         this.hud.toast("Flare! The Runner is here.", 1600);
         if (!this.data_.local) sfx.ping();
@@ -258,6 +266,12 @@ export class GuideScene extends Phaser.Scene {
     if (!this.level) return;
     // A flare runs out, or the guide just switched the camera that was watching the runner.
     if (this.onCam !== this.seen) this.redraw();
+    const warned = [...this.drones.values()].find((d) => d.warn.visible);
+    // The coach only knows what the guide knows: where the runner was last seen.
+    this.tutor.update({
+      level: this.level, runner: this.lastSeenPos, moved: 0, ...this.coach, lampsOn: this.lightsOn.size, powered: this.powered.size,
+      seen: this.seen, bridgeOpen: false, filterInView: null, unseenDrone: warned ? warned.tile : null,
+    });
     if (!this.seen) this.ghostLabel.setText(`last seen ${Math.round((time - this.lastSeenAt) / 1000)}s ago`);
   }
 }

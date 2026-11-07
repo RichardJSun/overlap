@@ -89,6 +89,13 @@ export function makeTextures(scene: Phaser.Scene) {
   radial(scene, "light-falloff", 256, (t) => { const v = Math.round(falloff(t) * 255); return [v, v, v, 255]; });
   radial(scene, "soft", 64, (t) => [255, 255, 255, Math.round(Math.max(0, 1 - t) ** 2 * 255)]);
 
+  // Tutorial pointer: an amber chevron that bobs over the tile to look at.
+  tex("pointer", T, T, () => {
+    g.fillStyle(0xffd38a, 0.25).fillTriangle(4, 6, T - 4, 6, C, T - 2);
+    g.fillStyle(0xffd38a).fillTriangle(8, 8, T - 8, 8, C, T - 6);
+    g.fillStyle(0x0b1020).fillTriangle(13, 10, T - 13, 10, C, 17);
+  });
+
   for (let c = 1; c < 8; c++) {
     const col = hex(c), pale = mixWhite(col, 0.45);
     tex(`lamp-${c}`, T, T, () => lamp(g, col, true));

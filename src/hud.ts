@@ -44,6 +44,11 @@ const CSS = `
 .hud.guide .objective{bottom:72px}
 .hud .objective .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
 .hud .objective.done .lbl{color:var(--green)}
+.hud .coach{position:absolute;left:50%;top:52px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:10px 14px 10px 12px;
+  display:flex;gap:10px;align-items:flex-start;background:rgba(11,16,32,.95);border:1px solid var(--amber);box-shadow:0 0 24px rgba(255,211,138,.14);
+  font-size:13px;line-height:1.45;color:var(--ink);transform:translate(-50%,0);transition:opacity .3s ease,transform .4s var(--ease)}
+.hud .coach.off{opacity:0;transform:translate(-50%,-6px)}
+.hud .coach .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
 .hud .card{position:absolute;left:50%;top:42%;box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);padding:16px 26px 14px;text-align:center;
   background:rgba(11,16,32,.94);border:1px solid var(--amber);box-shadow:0 0 40px rgba(255,211,138,.18);opacity:0;transform:translate(-50%,-50%) scale(.96);
   transition:opacity .35s ease,transform .45s var(--ease)}
@@ -91,7 +96,7 @@ export class Hud {
     this.el.className = `hud ${role}`;
     this.el.innerHTML = `
       <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
-      <div class="intro off"></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
+      <div class="intro off"></div><div class="coach off" role="status"><span class="lbl"></span><span class="say"></span></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
       ${role === "guide" ? `<div class="bottom"><div class="hint"></div><div class="deck"><span class="lbl">Power</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
@@ -160,6 +165,16 @@ export class Hud {
   objective(text: string, done = false) {
     this.q(".obj").textContent = text;
     this.q(".objective").classList.toggle("done", done);
+  }
+
+  /** Tutorial coach box under the top bar; null hides it. While it shows, the district intro stays hidden. */
+  coach(text: string | null, label = "") {
+    const el = this.q(".coach");
+    el.classList.toggle("off", !text);
+    if (!text) return;
+    this.q(".intro").classList.add("off");
+    el.querySelector(".lbl")!.textContent = label;
+    el.querySelector(".say")!.textContent = text;
   }
 
   /** A short centered card for milestones, e.g. a district restored. */
