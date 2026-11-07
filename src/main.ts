@@ -1,15 +1,22 @@
-import Phaser from "phaser";
+import { startGame } from "./game.ts";
+import { localPair } from "./net/local.ts";
+import { WebSocketTransport } from "./net/ws.ts";
+import type { Role } from "./shared/protocol.ts";
+import { showTitle } from "./title.ts";
 
-class Hello extends Phaser.Scene {
-  create() {
-    this.add.text(20, 20, "Overlap", { color: "#e8ecff", fontSize: "32px" });
-  }
+const q = new URLSearchParams(location.search);
+const app = document.getElementById("app")!;
+const room = q.get("room")?.toUpperCase();
+const role: Role = q.get("role") === "guide" ? "guide" : "runner";
+
+if (q.has("local")) {
+  // One screen, both roles: the showcase fallback and the main dev loop.
+  const [runnerSide, guideSide] = localPair();
+  app.classList.add("split");
+  startGame(app, "runner", runnerSide);
+  startGame(app, "guide", guideSide);
+} else if (room) {
+  startGame(app, role, new WebSocketTransport(room, role), room);
+} else {
+  showTitle(app, (r, transport, code) => startGame(app, r, transport, code));
 }
-
-new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: document.getElementById("app")!,
-  backgroundColor: "#0b1020",
-  scale: { mode: Phaser.Scale.RESIZE },
-  scene: [Hello],
-});
