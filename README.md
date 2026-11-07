@@ -23,7 +23,7 @@ Light colors add. A colored bridge or door exists only while all of its colors a
 
 Every color also has a shape, so the game is playable without telling colors apart: red is a triangle, green a circle, blue a square, and mixes overlay their shapes.
 
-Each substation the Runner reaches powers its block for good, moves the checkpoint, and gives the Guide more power. When every block is lit, both screens show the same view for the first time.
+Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach one tile farther. The lantern starts every district at 3 tiles. When every block is lit, both screens show the same view for the first time.
 
 ## How to play
 
@@ -40,7 +40,7 @@ No second device? Open [`?local=1`](https://overlap.richardsun.workers.dev/?loca
 | Ping | — | tap any tile (2 s cooldown) |
 | Streetlight | — | tap a streetlight to switch it (power budget shown as bars) |
 
-District 1 is a tutorial: each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
+The game opens in the field tech's dark bedroom, with the phone ringing on the nightstand. Answer it and you hear from dispatch while the city outside the window splits from white into red, green, and blue and goes dark. District 1 is a tutorial: each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
 
 A drone touching the Runner sends them back to the last substation. If the Guide switches off the light holding up the bridge the Runner is standing on, the bridge vanishes, and so does the Runner. There are no lives and no game over.
 

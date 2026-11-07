@@ -110,3 +110,8 @@ Richard's notes, also done:
 - The title now leads with the camera idea and shows red + green + blue = white.
 
 ![Opener, white splitting](shots/title.png)
+
+## 15:25 A phone call, and a lantern that grows
+- **Cold open.** Richard pitched starting with the field tech asleep and the phone ringing. The opener now draws a dark bedroom in Canvas2D: a bed with someone in it, a nightstand, and a window full of white city lights. A phone buzzes on the nightstand with a synthesized ringtone. Pressing any key answers it, so the first thing a player does is pick up. Dispatch apologises for the hour while the skyline in the window splits into red, green, and blue and dies, then the scene cuts to the street for the blackout.
+- **The lantern grows.** It starts every district at 3 tiles and reaches one tile farther per substation powered, up to 5. The solver models the reach, so all three districts are still proven solvable. A flare throws the light about twice as far for a second, as a visual only, so a gate or drone can never vanish under the Runner when the flare fades.
+- We turned down random lights-out events, because they would drop players off bridges for no reason of their own, and the solver can't prove timed events fair.
