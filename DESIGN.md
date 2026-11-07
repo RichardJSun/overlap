@@ -206,7 +206,7 @@ Night at 92% with a hairline edge, body face, wraps on narrow panes. Runner toas
 A directory card in the 120px band the ending reserves: "The city is back on." in Powered display type, then tape lines for "Made at WolfJam 2026" and "Richard Sun", and a "Play again" button.
 
 ### Motion
-One authored moment per surface. Title: the lantern beam follows the pointer with an eased lag (and drifts on its own until the visitor moves). Lobby: the waiting dot breathes. Credits: lines rise in with a 60ms stagger. HUD: breaker throws are 160ms, toasts 200ms. `prefers-reduced-motion` removes movement and keeps opacity changes; the title shows the beams parked in their overlap.
+One authored moment per surface. Title: the lantern beam follows the pointer with an eased lag (and drifts on its own until the visitor moves). Lobby: the waiting dot breathes. Credits: lines rise in with a 90ms stagger. HUD: breaker throws are 160ms, toasts 200ms. `prefers-reduced-motion` removes movement and keeps opacity changes; the title shows the beams parked in their overlap.
 
 ## Do's and Don'ts
 

@@ -1,6 +1,6 @@
 const CSS = `
 .cr{--din:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;--ease:cubic-bezier(.23,1,.32,1);
-  position:absolute;left:0;right:0;bottom:0;box-sizing:border-box;min-height:120px;padding:16px 20px calc(16px + env(safe-area-inset-bottom));
+  position:absolute;left:0;right:0;bottom:0;box-sizing:border-box;min-height:120px;padding:16px 20px;
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;
   font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#e8ecff;background:linear-gradient(rgba(11,16,32,0),#0b1020 38%)}
 .cr-text{display:flex;flex-direction:column;gap:8px;min-width:0}
