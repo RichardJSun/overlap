@@ -19,7 +19,7 @@ const withoutGate = (level: Level, i: number) => {
 };
 
 describe("district data", () => {
-  it("has three districts", () => expect(LEVELS.length).toBe(3));
+  it("has five districts", () => expect(LEVELS.length).toBe(5));
 
   LEVELS.forEach((level, d) => {
     const name = `district ${d + 1} (${level.name})`;
@@ -51,7 +51,9 @@ describe("district data", () => {
         const cams = level.lights.filter((l) => tiles.some((t) => level.lightFields.get(l.id)![t.y * level.w + t.x]));
         expect(cams.length, `${dr.id} camera`).toBeGreaterThan(0);
         // A drone in a Runner color shows only in the Runner's own glass; the Guide can only ping it.
-        expect(cams.some((l) => reveals(l.color, dr.color)) || lanterns.some((c) => reveals(c, dr.color)), `${dr.id} color`).toBe(true);
+        // A mixed-color drone can need the lantern and a streetlight overlapping.
+        const shows = cams.some((l) => reveals(l.color, dr.color)) || lanterns.some((c) => reveals(c, dr.color) || cams.some((l) => reveals(l.color | c, dr.color)));
+        expect(shows, `${dr.id} color`).toBe(true);
       }
     });
 
@@ -80,9 +82,22 @@ describe("district data", () => {
     expect(solve(LEVELS[2], { maxLights: 1 })).toBe(-1);
   });
 
+  it("district 5 needs two streetlights at once, for the cyan bridge and the white door", () => {
+    expect(solve(LEVELS[4], { maxLights: 1 })).toBe(-1);
+  });
+
+  it("district 5 has a mixed-color drone that only the lantern and a streetlight together can show", () => {
+    const level = LEVELS[4];
+    const mixed = level.drones.filter((d) => ![1, 2, 4].includes(d.color));
+    expect(mixed.length).toBeGreaterThan(0);
+    for (const d of mixed) {
+      expect(reveals(level.lantern, d.color)).toBe(false);
+      expect(level.lights.some((l) => reveals(l.color, d.color))).toBe(false);
+    }
+  });
+
   it("later districts need longer solutions than the tutorial", () => {
     const steps = LEVELS.map((l) => solve(l));
-    expect(steps[1]).toBeGreaterThan(steps[0]);
-    expect(steps[2]).toBeGreaterThan(steps[0]);
+    for (const n of steps.slice(1)) expect(n).toBeGreaterThan(steps[0]);
   });
 });
