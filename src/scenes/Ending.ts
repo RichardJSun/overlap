@@ -9,6 +9,8 @@ import { makeTextures, PAL } from "../render/textures.ts";
 import { TILE } from "../shared/level.ts";
 import type { Role } from "../shared/protocol.ts";
 import { fitCamera } from "./fit.ts";
+import { spreadApart, whiteLights } from "./Intro.ts";
+import { LightLayer } from "../render/lights.ts";
 
 /** Both clients show this same view: the city sweeps back on, then both characters stand together. */
 export class EndingScene extends Phaser.Scene {
@@ -40,6 +42,12 @@ export class EndingScene extends Phaser.Scene {
         const dark = this.add.rectangle(x * TILE + TILE / 2, y * TILE + TILE / 2, TILE + 1, TILE + 1, PAL.night, 0.94).setDepth(5);
         this.tweens.add({ targets: dark, alpha: 0, delay: 400 + (d / maxD) * 2600, duration: 500, ease: "Quad.easeOut" });
       }
+    // The opener in reverse: separated red, green and blue lights slide together into white.
+    const parts = whiteLights(level);
+    const layer = new LightLayer(this, level, 0x6a7088).setDepth(4);
+    const state = { spread: 1.3 };
+    this.tweens.add({ targets: state, spread: 0, delay: 900, duration: 2600, ease: "Cubic.easeInOut" });
+    this.events.on("update", () => { spreadApart(parts, state.spread); layer.draw(parts.map((p) => p.src), level.substations.map((s) => s.block)); });
     const warm = this.add.rectangle(0, 0, level.w * TILE, level.h * TILE, PAL.warm, 0).setOrigin(0).setDepth(6).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: warm, fillAlpha: 0.12, delay: 1800, duration: 2500 });
 

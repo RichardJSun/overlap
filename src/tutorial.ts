@@ -63,6 +63,8 @@ export class Tutor {
   private hintUntil = 0;
   private seenHints = new Set<Step>();
   private pointer: Phaser.GameObjects.Image;
+  private holdUntil = -1; // district 1 lets the radio call play before the first step
+  private hold = 0;
 
   constructor(private scene: Phaser.Scene, private hud: Hud, private role: Role) {
     this.pointer = scene.add.image(0, 0, "pointer").setDepth(40).setVisible(false);
@@ -71,11 +73,15 @@ export class Tutor {
   setDistrict(di: number) {
     this.tutorial = di === 0;
     this.steps = this.tutorial ? TUTORIAL[this.role] : HINTS[this.role];
+    this.hold = this.tutorial ? 5500 : 0;
+    this.holdUntil = -1;
     this.show(undefined);
   }
 
   update(c: TutorCtx) {
     const now = this.scene.time.now;
+    if (this.holdUntil < 0) this.holdUntil = now + this.hold;
+    if (now < this.holdUntil) return;
     let step: Step | undefined;
     if (this.tutorial) {
       const i = this.steps.findIndex((s) => !s.done(c));

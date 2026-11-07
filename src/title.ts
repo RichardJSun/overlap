@@ -118,7 +118,7 @@ export function showTitle(root: HTMLElement, start: Start): void {
   );
 
   const actions = el("section", { className: "ov-actions" },
-    el("p", { className: "ov-pitch", textContent: "A city in blackout. One of you walks the dark with a lantern. The other runs the grid from the control room." }),
+    el("p", { className: "ov-pitch", textContent: "A city in blackout. One of you walks the dark with a lantern. The other runs the grid and can only see you through the streetlights." }),
     el("div", { className: "ov-run" }, runnerBtn, el("p", { className: "ov-help", textContent: "Opens a room. Your Guide joins from a second computer, a phone, or another tab." })),
     form,
     el("a", { className: "ov-local", href: "?local=1", textContent: "Try it solo: both roles on one screen" }),
@@ -129,10 +129,11 @@ export function showTitle(root: HTMLElement, start: Start): void {
     el("h2", { textContent: "How to play" }),
     el("dl", { className: "ov-roles" },
       el("div", {}, el("dt", {}, tape("Runner")), el("dd", { textContent: "Walks the dark streets with a lantern and sees only what light reaches. Arrows or WASD, or tap to move. Space flares so the Guide can find you. Colored glass on the street changes your lantern." })),
-      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Runs the grid from the control room. Sees the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Tap to ping, right-click or hold to warn, tap a streetlight to switch it, within the power budget." })),
+      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Runs the grid from the control room. Sees the city and its drones, but sees the Runner only under a lit streetlight or in a powered block. Tap to ping, right-click or hold to warn, tap a streetlight to switch it, within the power budget." })),
     ),
-    el("p", { className: "ov-rule", textContent: "Light adds up. A bridge or door appears when all its colors are in the light: magenta needs red and blue on it." }),
-    el("ul", { className: "ov-mixes" }, mixRow(R, B), mixRow(R, G), mixRow(G, B)),
+    el("p", { className: "ov-rule", textContent: "Light adds up. A bridge or door appears only while all of its colors shine on it, so magenta needs both red and blue." }),
+    el("ul", { className: "ov-mixes" }, mixRow(R, B), mixRow(R, G), mixRow(G, B),
+      el("li", { className: "ov-mix ov-mix3" }, swatch(R), el("span", { className: "ov-op", textContent: "+" }), swatch(G), el("span", { className: "ov-op", textContent: "+" }), swatch(B), el("span", { className: "ov-op", textContent: "=" }), swatch(mix(R, G, B)))),
   );
 
   body.append(actions, legend);
@@ -289,6 +290,7 @@ const CSS = `
 .ov-roles dd { margin: 0; color: var(--dim); max-width: 52ch; }
 .ov-rule { margin: 4px 0 0; color: var(--ink); }
 .ov-mixes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ov-mix.ov-mix3 { display: flex; flex-wrap: wrap; gap: 8px; }
 .ov-mix { display: grid; grid-template-columns: 6.2em 1em 6.2em 1em auto; align-items: center; gap: 8px; }
 .ov-sw { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .ov-op { color: var(--faint); text-align: center; }

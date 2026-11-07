@@ -3,7 +3,9 @@ import { sourceField, type Grid, type LightSource } from "./lighting.ts";
 import type { Vec } from "./protocol.ts";
 
 export const TILE = 32;
-export const LANTERN_RADIUS = 4;
+/** The lantern starts short in every district and reaches one tile farther per substation powered. */
+export const LANTERN_BASE = 3, LANTERN_MAX = 5;
+export const lanternRadius = (powered: number) => Math.min(LANTERN_MAX, LANTERN_BASE + powered);
 
 /**
  * Hand-authored district. `map` rows use:
@@ -17,7 +19,9 @@ export const LANTERN_RADIUS = 4;
 export type LevelJson = {
   name: string;
   intro?: string;
-  /** Radio line on the "district restored" card. */
+  /** Who the intro line is from, e.g. "Call · Canal Street". */
+  introLabel?: string;
+  /** Log line on the "power restored" card. */
   restored?: string;
   lantern: ColorMask;
   budget: number;
@@ -122,10 +126,10 @@ export function validateLevel(j: LevelJson): string[] {
 }
 
 /** Light sources for the current state: the runner's lantern plus every streetlight that is on. */
-export function sources(level: Level, runner: Vec, lightsOn: Iterable<string>, lantern: ColorMask = level.lantern): LightSource[] {
+export function sources(level: Level, runner: Vec, lightsOn: Iterable<string>, lantern: ColorMask = level.lantern, radius = LANTERN_BASE): LightSource[] {
   const on = new Set(lightsOn);
   return [
-    { x: runner.x, y: runner.y, color: lantern, radius: LANTERN_RADIUS },
+    { x: runner.x, y: runner.y, color: lantern, radius },
     ...level.lights.filter((l) => on.has(l.id)),
   ];
 }
@@ -176,7 +180,7 @@ type Node = [pos: number, lights: number, subs: number, lantern: ColorMask];
 /**
  * BFS over (runner tile, lights on, substations powered, lantern color). The guide may toggle lights
  * at any time within budget, except to strand the runner on a gate. Stepping on a filter recolors the
- * lantern. Drones are timing hazards and are not modelled. Returns the shortest list of actions
+ * lantern, and powering a substation lengthens it. Drones are timing hazards and are not modelled. Returns the shortest list of actions
  * (moves and toggles) from `from` (default: district start) to the exit, or null.
  * `maxLights` caps the budget, e.g. 0 to prove the district needs the guide.
  */
@@ -185,10 +189,10 @@ export function plan(level: Level, opts: { maxLights?: number; from?: PlanState 
   const ids = level.lights.map((l) => l.id);
   const fields = ids.map((id) => level.lightFields.get(id)!);
   const lanternCache = new Map<number, Uint8Array>();
-  const lanternAt = (x: number, y: number, c: ColorMask) => {
-    const k = (y * w + x) * 8 + c;
+  const lanternAt = (x: number, y: number, c: ColorMask, r: number) => {
+    const k = ((y * w + x) * 8 + c) * 8 + r;
     let f = lanternCache.get(k);
-    if (!f) lanternCache.set(k, (f = sourceField(level, { x, y, color: c, radius: LANTERN_RADIUS })));
+    if (!f) lanternCache.set(k, (f = sourceField(level, { x, y, color: c, radius: r })));
     return f;
   };
   const subIdx = new Map(level.substations.map((s, i) => [s.y * w + s.x, i]));
@@ -218,7 +222,7 @@ export function plan(level: Level, opts: { maxLights?: number; from?: PlanState 
       const x = pos % w, y = (pos - x) / w;
       const push = (n: Node, a: Action) => { const k = key(...n); if (!parent.has(k)) { parent.set(k, [here, a]); next.push(n); } };
       const budget = Math.min(budgetFor(level, pop(subs)), opts.maxLights ?? Infinity);
-      const lf = lanternAt(x, y, lan);
+      const lf = lanternAt(x, y, lan, lanternRadius(pop(subs)));
       const litWith = (ls: number, at: number) => { let c = lf[at]; for (let i = 0; i < ids.length; i++) if (ls & (1 << i)) c |= fields[i][at]; return c; };
       for (let i = 0; i < ids.length; i++) {
         const bit = 1 << i;
