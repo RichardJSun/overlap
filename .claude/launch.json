@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cf-dev",
+      "runtimeExecutable": "./node_modules/.bin/cf",
+      "runtimeArgs": ["dev"],
+      "port": 5173
+    }
+  ]
+}

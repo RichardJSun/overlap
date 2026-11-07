@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.cloudflare/
+.wrangler/
+test-results/
+playwright-report/
+.dev.vars*
+.env*
+
+!.dev.vars.example
+!.env.example
+.claude/.cc-writes
