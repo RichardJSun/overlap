@@ -6,7 +6,7 @@ import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { install, keyFor, playToEnd } from "./lib/drive.mjs";
+import { install, keyFor, playToEnd, solveBreaker } from "./lib/drive.mjs";
 
 const base = process.argv[2] ?? "http://localhost:5173";
 const out = process.argv[3] ?? "docs/demo.mp4";
@@ -68,13 +68,20 @@ await page.waitForTimeout(2600);
 await walk("R DDD RRRR DDDDDDD", 150);
 mark("district 1 done");
 
-// Districts 2 and 3, driven by the solver, with the guide pinging drones the runner can't see.
+// Districts 2 to 5, driven by the solver, with the guide pinging drones the runner can't see.
 await playToEnd(page, {
   pingDrones: true,
   toggleDelay: 650,
-  onDistrict: async (di) => { mark(`district ${di + 1}`); await page.waitForTimeout(2200); },
+  onDistrict: async (di) => {
+    mark(`district ${di + 1}`);
+    await page.waitForTimeout(2200);
+    // One of the Guide's quick signals, so the video shows a callout over the Runner.
+    if (di === 1) { await page.locator('[data-role="guide"] .sig button[data-e="go"]').click(); await page.waitForTimeout(1600); }
+  },
   onPowered: async () => { await page.waitForTimeout(1200); },
 });
+mark("main breaker");
+await solveBreaker(page, { typeDelay: 45, pause: 1500, onTrip: () => page.waitForTimeout(2600) });
 mark("ending");
 await page.waitForTimeout(10000);
 const log = await page.evaluate(() => window.__audioLog);
