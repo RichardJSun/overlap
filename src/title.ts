@@ -121,15 +121,15 @@ export function showTitle(root: HTMLElement, start: Start): void {
     el("p", { className: "ov-pitch", textContent: "A city in blackout. One of you walks the dark with a lantern. The other runs the grid from the control room." }),
     el("div", { className: "ov-run" }, runnerBtn, el("p", { className: "ov-help", textContent: "Opens a room. Your Guide joins from a phone." })),
     form,
-    el("a", { className: "ov-local", href: "?local=1", textContent: "Both roles on one screen" }),
+    el("a", { className: "ov-local", href: "?local=1", textContent: "Try it solo: both roles on one screen" }),
   );
   actions.setAttribute("aria-label", "Start");
 
   const legend = el("section", { className: "ov-legend" },
     el("h2", { textContent: "How to play" }),
     el("dl", { className: "ov-roles" },
-      el("div", {}, el("dt", {}, tape("Runner")), el("dd", { textContent: "Walks the streets with the lantern and sees only what light reaches. Arrows or WASD, or tap to move." })),
-      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Sees the whole city from the control room. Tap to ping. Tap a streetlight to switch it, within the power budget. An amber ring marks a drone the Runner can't see." })),
+      el("div", {}, el("dt", {}, tape("Runner")), el("dd", { textContent: "Walks the dark streets with a lantern and sees only what light reaches. Arrows or WASD, or tap to move. Space flares so the Guide can find you. Colored glass on the street changes your lantern." })),
+      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Runs the grid from the control room. Sees the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Tap to ping, tap a streetlight to switch it, within the power budget." })),
     ),
     el("p", { className: "ov-rule", textContent: "Light adds up. Bridges and doors only exist in the right mix." }),
     el("ul", { className: "ov-mixes" }, mixRow(R, B), mixRow(R, G), mixRow(G, B)),
@@ -267,9 +267,9 @@ const CSS = `
 .ov-input[aria-invalid=true] { border-color: var(--red); }
 .ov-err { margin: 0; color: var(--red); font-size: 13px; }
 .ov-err:empty { display: none; }
-.ov-local { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; color: var(--dim); font-size: 14px;
-  text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 5px; text-decoration-thickness: 1px; }
-@media (hover: hover) { .ov-local:hover { color: var(--ink); text-decoration-color: var(--amber); } }
+.ov-local { align-self: stretch; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; box-sizing: border-box;
+  color: var(--ink); font-size: 15px; text-decoration: none; background: var(--street); border: 1px solid var(--edge); transition: border-color .15s ease, background-color .15s ease; }
+@media (hover: hover) { .ov-local:hover { border-color: var(--amber); } }
 
 .ov-tape { display: inline-flex; align-items: center; height: 24px; padding: 2px 9px 0; box-sizing: border-box; border-radius: 2px; background: var(--wall);
   box-shadow: inset 0 1px 0 rgba(232, 236, 255, .09), 0 1px 2px rgba(0, 0, 0, .5);
