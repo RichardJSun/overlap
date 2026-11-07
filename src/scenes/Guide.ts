@@ -101,7 +101,7 @@ export class GuideScene extends Phaser.Scene {
     this.lantern = this.level.lantern;
     this.exitGlow = { x: this.level.exit.x - 1, y: this.level.exit.y - 1, w: 3, h: 3 };
     this.map = new MapView(this, this.level, { glyphs: true }).setDepth(0);
-    this.map.base.setAlpha(0.55);
+    this.map.base.setAlpha(0.92);
     for (const f of this.level.filters) this.map.base.add(this.add.image(f.x * TILE + TILE / 2, f.y * TILE + TILE / 2, `filter-${f.color}`));
     this.lightLayer = new LightLayer(this, this.level, 0x000000, 0).setDepth(10);
     this.lightLayer.rt.setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.45);
