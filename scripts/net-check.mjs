@@ -16,7 +16,7 @@ await runner.getByText("Play as Runner").click();
 const code = (await runner.getByTestId("room-code").textContent()).trim();
 check(/^[A-Z]{4}$/.test(code), `room code ${code}`);
 await guide.goto(`${base}/?room=${code}&role=guide`);
-const scene = (p, key) => p.waitForFunction((k) => window.__games?.[0]?.scene.getScene(k)?.level, key);
+const scene = (p, key) => p.waitForFunction((k) => window.__games?.[0]?.scene.getScene(k)?.level, key, { timeout: 60000 }); // the cold open plays first
 await scene(runner, "runner");
 await scene(guide, "guide");
 await runner.waitForTimeout(800);

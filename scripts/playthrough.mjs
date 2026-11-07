@@ -10,7 +10,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 720 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-await page.goto(`${base}/?local=1`);
+await page.goto(`${base}/?local=1&nointro`);
 await page.waitForFunction(() => window.__games?.length === 2 && window.__games[0].scene.getScene("runner")?.level);
 await page.waitForTimeout(800);
 
