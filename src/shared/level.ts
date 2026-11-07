@@ -140,7 +140,7 @@ export type PlanState = { pos: Vec; lightsOn: string[]; powered: string[] };
 
 /**
  * BFS over (runner tile, set of lights on, substations powered). The guide may toggle lights at any
- * time within budget. Drones are timing hazards and are not modelled. Returns the shortest list of
+ * time within budget, except to strand the runner on a gate. Drones are timing hazards and are not modelled. Returns the shortest list of
  * actions (moves and toggles) from `from` (default: district start) to the exit, or null.
  * `maxLights` caps the budget, e.g. 0 to prove the district needs the guide.
  */
@@ -180,18 +180,18 @@ export function plan(level: Level, opts: { maxLights?: number; from?: PlanState 
       const x = pos % w, y = (pos - x) / w;
       const push = (p: number, l: number, s: number, a: Action) => { const k = key(p, l, s); if (!parent.has(k)) { parent.set(k, [here, a]); next.push([p, l, s]); } };
       const budget = Math.min(budgetFor(level, pop(subs)), opts.maxLights ?? Infinity);
+      const lf = lanternAt(x, y);
+      const litWith = (ls: number, at: number) => { let c = lf[at]; for (let i = 0; i < ids.length; i++) if (ls & (1 << i)) c |= fields[i][at]; return c; };
       for (let i = 0; i < ids.length; i++) {
         const bit = 1 << i;
-        if (lights & bit) push(pos, lights & ~bit, subs, { toggle: ids[i] });
+        // Switching off the light that holds up the runner's bridge or door sends them back, so never plan it.
+        if (lights & bit) { if (passable(level, x, y, litWith(lights & ~bit, pos), subs === allSubs)) push(pos, lights & ~bit, subs, { toggle: ids[i] }); }
         else if (pop(lights) < budget) push(pos, lights | bit, subs, { toggle: ids[i] });
       }
-      const lf = lanternAt(x, y);
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy, ni = ny * w + nx;
         if (nx < 0 || ny < 0 || nx >= w || ny >= level.h) continue;
-        let lit = lf[ni];
-        for (let i = 0; i < ids.length; i++) if (lights & (1 << i)) lit |= fields[i][ni];
-        if (!passable(level, nx, ny, lit, subs === allSubs)) continue;
+        if (!passable(level, nx, ny, litWith(lights, ni), subs === allSubs)) continue;
         const si = subIdx.get(ni);
         push(ni, lights, si === undefined ? subs : subs | (1 << si), { move: { x: dx, y: dy } });
       }

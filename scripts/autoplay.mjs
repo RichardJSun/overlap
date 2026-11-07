@@ -17,7 +17,7 @@ await page.evaluate(() => {
   window.__deaths = [];
   const s = window.__games[0].scene.getScene("runner");
   const orig = s.respawn;
-  s.respawn = function (reason) { window.__deaths.push({ di: this.di, reason }); return orig.call(this, reason); };
+  s.respawn = function (reason) { window.__deaths.push({ di: this.di, reason, at: { ...this.pos }, t: +((this.time.now - this.t0) / 1000).toFixed(1) }); return orig.call(this, reason); };
 });
 const KEY = { "1,0": "ArrowRight", "-1,0": "ArrowLeft", "0,1": "ArrowDown", "0,-1": "ArrowUp" };
 const state = () => page.evaluate(() => {
@@ -77,7 +77,7 @@ for (;;) {
     await page.keyboard.press(KEY[`${action.move.x},${action.move.y}`]);
     await page.waitForTimeout(140);
   }
-  if (++steps % 40 === 0) console.log(`  step ${steps}: at ${st.pos.x},${st.pos.y} lights [${st.lightsOn}] powered [${st.powered}] deaths ${await page.evaluate(() => window.__deaths.length)}`);
+  if (++steps % 40 === 0) console.log(`  step ${steps}: at ${st.pos.x},${st.pos.y} lights [${st.lightsOn}] powered [${st.powered}] deaths ${await page.evaluate(() => JSON.stringify(window.__deaths.slice(-3)))}`);
   if (steps > 3000) throw new Error("too many steps");
 }
 await page.waitForTimeout(6000);
