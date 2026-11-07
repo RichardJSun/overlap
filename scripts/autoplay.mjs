@@ -75,7 +75,7 @@ for (;;) {
     if (!ok) continue;
     last = action.move;
     await page.keyboard.press(KEY[`${action.move.x},${action.move.y}`]);
-    await page.waitForTimeout(140);
+    await page.waitForTimeout(20);
   }
   if (++steps % 40 === 0) console.log(`  step ${steps}: at ${st.pos.x},${st.pos.y} lights [${st.lightsOn}] powered [${st.powered}] deaths ${await page.evaluate(() => JSON.stringify(window.__deaths.slice(-3)))}`);
   if (steps > 3000) throw new Error("too many steps");

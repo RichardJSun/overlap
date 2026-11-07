@@ -33,3 +33,14 @@ Empty repo. Plan and rules live in [HANDOFF.md](../HANDOFF.md).
 
 ![Title](shots/title.png)
 ![Lobby](shots/lobby.png)
+
+## 13:20 Districts 2–3, art pass, UI pass, and a solver bug the autoplayer caught
+- **Districts.** "Market Lights" introduces green drones that hide in red light. "Old Locks" chains a yellow door, a two-tile cyan bridge (green + blue streetlights; the lantern doesn't matter), and a magenta door, with only 2 lights allowed at once. Tests prove each district is solvable, unsolvable without the Guide, and that walling up any single gate breaks it.
+- **Art pass** (`src/render/`). Each light is a smooth radial falloff clipped by its shadow polygon and cached per streetlight. The lightmap uses a custom 2× modulate blend, so lit art can get brighter as well as darker. The city is baked into one texture per district: streets with lane dashes, roofs with facades, and a canal with shimmer. Powering a substation turns its block's windows on one by one. Lamps flicker when switched on. The Runner gets a vignette and grain; the Guide gets scanlines and a CRT edge.
+- **UI pass** ("The Breaker Room", see [DESIGN.md](../DESIGN.md)). The title, HUD, and credits look like a utility room with the power off, with color only where light or live state exists. The title wordmark is lit by two streetlights and a red lantern that follows the pointer, so you see magenta and yellow before reading any rule.
+- **Autoplayer.** The solver now returns its action plan, and `scripts/autoplay.mjs` plays every district in a real headless browser, waiting out drones and replanning after each death.
+- **Bug it found.** The autoplayer died 49 times in a row in district 3's yellow door. The game sends the Runner back when the light under their door goes out, but the solver didn't know that rule. Its plan switched the green light off with the Runner standing in the doorway. The solver now never plans a toggle that strands the Runner, so solver and game agree again.
+- **Tuning.** Even with that fixed, three drones guarding the only corridor east of the cyan bridge made district 3 a grind: each death meant re-raising the bridge. The drones are now about 20% slower, and the hit radius is half a tile.
+
+![District 1, art pass](shots/d1-magenta-bridge.png)
+![Title, UI pass](shots/title.png)

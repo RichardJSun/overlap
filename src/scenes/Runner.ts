@@ -293,7 +293,7 @@ export class RunnerScene extends Phaser.Scene {
       d.img.setVisible(visible);
       const dist = Math.hypot(p.x - rx, p.y - ry);
       if (visible) nearest = Math.min(nearest, dist);
-      if (dist < 0.6 && time > this.invulnUntil) { this.respawn("A security drone caught you."); return; }
+      if (dist < 0.5 && time > this.invulnUntil) { this.respawn("A security drone caught you."); return; }
     }
     sfx.drone(nearest === Infinity ? 0 : Math.max(0, 1 - nearest / 6));
     if (this.dronesDirty && time - this.lastDroneSend >= 200) {
