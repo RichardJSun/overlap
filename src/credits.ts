@@ -35,7 +35,7 @@ export function showCredits(pane: HTMLElement, onAgain: () => void, stats?: { ms
   tapes.append(tape("Overlap", "wm"), tape("Made at WolfJam 2026"), tape("Richard Sun"));
   if (stats) {
     const s = Math.round(stats.ms / 1000);
-    tapes.append(tape(`Time ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`), tape(stats.caught === 1 ? "Caught once" : `Caught ${stats.caught}×`));
+    tapes.append(tape(`Time ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`), tape(stats.caught === 0 ? "Never caught" : stats.caught === 1 ? "Caught once" : `Caught ${stats.caught} times`));
   }
   text.append(head, tapes);
   const again = Object.assign(document.createElement("button"), { type: "button", textContent: "Play again" });

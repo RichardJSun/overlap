@@ -11,3 +11,4 @@ playwright-report/
 !.env.example
 .claude/.cc-writes
 .claude/worktrees/
+docs/demo.mp4

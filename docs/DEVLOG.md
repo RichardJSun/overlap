@@ -74,3 +74,11 @@ Richard's design calls, all built:
 Mistake of the hour: a scratch worktree's `node_modules` was a symlink, which the `node_modules/` (directories only) ignore rule missed. It got committed, and the merge replaced the real folder with a link to itself. Fixed, and the rule is now `node_modules`.
 
 ![Tutorial, both roles](shots/tut-flared.png)
+
+## 14:10 Redesigned districts, demo video, production checks
+- **Districts 2 and 3 rebuilt around filters.** District 2's only way out of the start yard is green glass, and the green lantern plus a blue streetlight raises a cyan bridge. Then the Runner needs red for the yellow door, so the Guide supplies it. District 3 needs both glasses in order, a two-light cyan bridge, and two locks. Every crossing has a second lane and a streetlight camera over it, and no catch sends the Runner back across the canal. A test removes each filter in turn and checks the district breaks or gets longer.
+- **Autoplay, all three districts:** 52 s, 162 actions, **zero catches**, no console errors. The old district 3 took 157 s with 30 catches.
+- **Demo video** (`scripts/record-demo.mjs`): 90 s at 1440×810. It records the title and a `?local=1` playthrough in headless Chromium. Playwright can't record audio, so every sound call is logged with a timestamp and re-rendered afterwards through an `OfflineAudioContext` with the game's own synth code, then muxed with ffmpeg. The sound in the video is exactly what the game plays.
+- **Two-browser check on production** (`scripts/net-check.mjs`): the Runner starts from the title, the Guide joins by link on an iPhone-sized viewport, and moves, the off-camera rule, flares, and streetlights all cross the real Worker.
+
+![Network check, Guide on a phone](shots/net-guide-phone.png)
