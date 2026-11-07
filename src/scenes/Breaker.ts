@@ -58,7 +58,7 @@ const CSS = `
 .bk button:active:not(:disabled){transform:scale(.97)}
 .bk button:focus-visible{outline:2px solid var(--amber);outline-offset:-4px}
 .bk button:disabled{cursor:not-allowed;color:var(--faint)}
-.bk-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+.bk-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .bk-controls button+button{box-shadow:inset 1px 0 0 var(--line)}
 .bk-key[aria-pressed=true]{color:var(--night);background:var(--amber)}
 .bk-lever{outline:1.5px solid var(--red);outline-offset:-1.5px;background:rgba(255,77,94,.08)!important}
@@ -73,6 +73,7 @@ const CSS = `
 .bk-pad button{min-height:44px;padding:2px 6px 0;font:600 14px/1 var(--mono);letter-spacing:0;text-transform:none;box-shadow:inset -1px -1px 0 var(--line)}
 .bk-pad button small{display:block;margin-top:4px;font:600 11px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .bk-pad .name{color:var(--amber)}
+.bk-pad .del{font:700 15px/1 var(--din);font-stretch:condensed;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .bk-err{min-height:1.45em;margin:-4px 0 0;color:var(--red)}
 .bk-row{display:flex;align-items:stretch;border:1.5px solid var(--ink)}
 .bk-install{box-shadow:inset -1px 0 0 var(--line)}
@@ -82,7 +83,8 @@ const CSS = `
 
 .bk-tests{border-collapse:collapse;width:100%;border:1.5px solid var(--ink);font-variant-numeric:tabular-nums}
 .bk-tests td,.bk-tests th{padding:9px 8px;border-top:1px solid var(--line);text-align:left;vertical-align:middle}
-.bk-tests th{font:600 11px/1.2 var(--mono);color:var(--faint);border-top:0;padding-top:10px}
+.bk-tests th{font:700 13px/1.2 var(--din);font-stretch:condensed;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border-top:0;padding-top:10px}
+.bk-tests th.id{font:600 11px/1.2 var(--mono);letter-spacing:0;text-transform:none}
 .bk-tests th:first-child,.bk-tests td:first-child{padding-left:12px}
 .bk-tests .val{font:13px/1 var(--mono);color:var(--dim)}
 .bk-tests .val.f{color:var(--faint)}
@@ -100,6 +102,8 @@ const CSS = `
 .bk-last:not(:empty)::before{content:"NOTE";margin-right:10px;font:700 14px var(--din);letter-spacing:.12em;color:var(--amber);border-bottom:1px solid var(--amber)}
 .hud.breaker .objective,.hud.breaker .bottom{display:none}
 .hud.breaker .toast{bottom:22px}
+@container (max-width:559px){.bk-steps li.done{display:none}}
+@container (max-width:559px){.hud.breaker.runner .toast{bottom:auto;top:52px}}
 @container (max-width:479px){.bk-tests th,.bk-tests td{padding:8px 5px}.bk-tests .val{font-size:12px}.bk-pad button{font-size:13px}}
 @media (prefers-reduced-motion:reduce){.bk,.bk *{transition:none!important;animation:none!important}}
 `;
@@ -111,10 +115,10 @@ const rgba = (c: number, a: number) => `rgba(${c >> 16},${(c >> 8) & 255},${c & 
 const needle = (mw: number) => -90 + (180 * Math.min(150, Math.max(0, mw))) / 150;
 
 /** Pieces of a rule the Guide can tap in, with a plain word under each symbol. */
-const KEYS: [string, string, string][] = [
+const KEYS: [string, string, string][] = [ // insert, label, plain word ("" for reading names)
   [" && ", "&&", "and"], [" || ", "||", "or"], ["!", "!", "not"], [" < ", "<", "less"],
   ["(", "(", ""], [")", ")", ""], ["load", "load", ""], ["capacity", "capacity", ""],
-  ["line_clear", "line_clear", ""], ["override", "override", ""], [" > ", ">", "more"], ["⌫", "⌫", "delete"],
+  ["line_clear", "line_clear", ""], ["override", "override", ""], [" > ", ">", "more"], ["DEL", "Delete", ""],
 ];
 
 type Step = { text: string; show?: () => boolean; done: () => boolean };
@@ -230,8 +234,8 @@ export class BreakerScene extends Phaser.Scene {
           <text x="450" y="150" text-anchor="middle" fill="#e8ecff" stroke="none">line_clear</text><text x="450" y="167" text-anchor="middle" fill="#4dff88" stroke="none">true</text>
         </svg>
         <div class="bk-col">
+          <div class="bk-tb bk-controls"><button class="bk-key" type="button" aria-pressed="false">Override off</button><button class="bk-lever" type="button">Pull the lever</button></div>
           <ol class="bk-steps"></ol>
-          <div class="bk-tb bk-controls"><button class="bk-key" type="button" aria-pressed="false">Override key off</button><button class="bk-lever" type="button">Pull the lever</button></div>
           <div class="bk-tb"><div class="bk-cell" style="flex:1"><span class="bk-k">Rule from your Guide</span><code class="bk-rule"></code></div></div>
         </div>
       </div>
@@ -269,7 +273,7 @@ export class BreakerScene extends Phaser.Scene {
     this.key = !this.key;
     const b = this.q<HTMLButtonElement>(".bk-key");
     b.setAttribute("aria-pressed", String(this.key));
-    b.textContent = `Override key ${this.key ? "on" : "off"}`;
+    b.textContent = `Override ${this.key ? "on" : "off"}`;
     this.root.classList.toggle("keyed", this.key);
     this.q(".bk-keytxt").textContent = String(this.key);
     if (this.key) sfx.lightOn(); else sfx.lightOff();
@@ -285,6 +289,7 @@ export class BreakerScene extends Phaser.Scene {
     lever.classList.add("pulled");
     this.time.delayedCall(260, () => lever.classList.remove("pulled"));
     if (result === "closed") return this.close();
+    this.hud.el.querySelector(".intro")?.classList.add("off"); // the result toast takes the call note's place
     this.pulled = true;
     if (result === "tripped") this.tripped = true;
     this.renderSteps();
@@ -322,7 +327,7 @@ export class BreakerScene extends Phaser.Scene {
     const yes = (v: boolean | bigint) => (typeof v === "boolean" ? `<td class="val${v ? "" : " f"}">${v}</td>` : `<td class="val">${v}</td>`);
     const tests = TESTS.map((t) => `<tr><td>${esc(t.name)}</td>${yes(t.r.load)}${yes(t.r.capacity)}${yes(t.r.line_clear)}${yes(t.r.override)}<td class="exp">${t.close ? "Close" : "Stay open"}</td><td class="mark"></td></tr>`).join("");
     const vars = VARIABLES.map((v) => `<dt>${v.name}</dt><dd>${esc(v.about)}</dd>`).join("");
-    const pad = KEYS.map(([, label, word], i) => `<button type="button" data-i="${i}" class="${word ? "" : label.length > 1 ? "name" : ""}" aria-label="${esc(word || label)}">${esc(label)}${word ? `<small>${word}</small>` : ""}</button>`).join("");
+    const pad = KEYS.map(([, label, word], i) => `<button type="button" data-i="${i}" class="${label === "Delete" ? "del" : word ? "" : label.length > 1 ? "name" : ""}" aria-label="${esc(word || label)}">${esc(label)}${word ? `<small>${word}</small>` : ""}</button>`).join("");
     this.root.innerHTML = `<section class="bk-panel" aria-label="Main breaker rule">
       <div class="bk-tb"><div class="bk-cell" style="flex:1"><span class="bk-v">Main breaker rule</span></div><div class="bk-cell"><span class="bk-k">Breaker</span><span class="bk-v bk-state">Open</span></div></div>
       <div class="bk-cols">
@@ -335,7 +340,7 @@ export class BreakerScene extends Phaser.Scene {
           <div class="bk-row"><button class="bk-install" type="button">Install rule</button><span class="bk-installed"><span class="bk-k">Installed at the breaker</span><code></code></span></div>
         </div>
         <div class="bk-col">
-          <table class="bk-tests"><thead><tr><th>Safety test</th><th>load</th><th>capacity</th><th>line_clear</th><th>override</th><th>Expect</th><th></th></tr></thead><tbody>${tests}</tbody></table>
+          <table class="bk-tests"><thead><tr><th>Safety test</th><th class="id">load</th><th class="id">capacity</th><th class="id">line_clear</th><th class="id">override</th><th>Expect</th><th></th></tr></thead><tbody>${tests}</tbody></table>
           <dl class="bk-vars">${vars}</dl>
           <p class="bk-last" role="status"></p>
         </div>
@@ -378,7 +383,7 @@ export class BreakerScene extends Phaser.Scene {
       b.onclick = () => {
         const [ins] = KEYS[Number(b.dataset.i)];
         const s = text.selectionStart ?? text.value.length, e = text.selectionEnd ?? s;
-        if (ins === "⌫") {
+        if (ins === "DEL") {
           const from = s === e ? Math.max(0, s - 1) : s;
           text.setRangeText("", from, e, "end");
         } else {

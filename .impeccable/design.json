@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T23:00:00.000Z",
+  "title": "Design System: Overlap",
+  "extensions": {
+    "colorMeta": {
+      "night": { "role": "neutral", "displayName": "Night", "canonical": "oklch(17.7% 0.034 270)", "tonalRamp": ["#060a19", "#1e2436", "#3b4155", "#596175", "#7a8297", "#9ca5bb", "#c0c9e0", "#e5eeff"] },
+      "edge": { "role": "neutral", "displayName": "Wiring Edge", "canonical": "oklch(34.3% 0.060 269)", "tonalRamp": ["#040724", "#192342", "#354062", "#536084", "#7381a7", "#96a4cc", "#b9c8f1", "#deeeff"] },
+      "amber": { "role": "primary", "displayName": "Drafting Amber", "canonical": "oklch(88.9% 0.103 79)", "tonalRamp": ["#200000", "#3e1b00", "#5e3900", "#805900", "#a37b30", "#c79d55", "#edc279", "#ffe79e"] },
+      "light-red": { "role": "secondary", "displayName": "Lantern Red", "canonical": "oklch(67.6% 0.213 20)", "tonalRamp": ["#2d0000", "#6a0000", "#930004", "#bc0029", "#e6324a", "#ff5d6c", "#ff858e", "#ffcecd"] },
+      "light-green": { "role": "secondary", "displayName": "Signal Green", "canonical": "oklch(88.5% 0.216 150)", "tonalRamp": ["#001500", "#003a00", "#005c00", "#007f00", "#00a32d", "#00c854", "#34ee78", "#b3ffc4"] },
+      "light-blue": { "role": "secondary", "displayName": "Streetlight Blue", "canonical": "oklch(65.4% 0.184 262)", "tonalRamp": ["#00003c", "#00037c", "#0033a1", "#1d58c7", "#3f7cef", "#61a1ff", "#84c6ff", "#c2efff"] },
+      "mix-magenta": { "role": "tertiary", "displayName": "Mixed Magenta", "canonical": "oklch(73.3% 0.280 328)", "tonalRamp": ["#210023", "#5d0065", "#840089", "#ab00ae", "#d200d4", "#fb48fb", "#ff74ff", "#ffd2ff"] },
+      "mix-yellow": { "role": "tertiary", "displayName": "Mixed Yellow", "canonical": "oklch(90.9% 0.163 97)", "tonalRamp": ["#190500", "#3c1e00", "#5b3d00", "#7b5e00", "#9e8000", "#c1a400", "#e6c92a", "#ffef8e"] },
+      "mix-cyan": { "role": "tertiary", "displayName": "Mixed Cyan", "canonical": "oklch(91.3% 0.140 195)", "tonalRamp": ["#00151a", "#00353a", "#005559", "#00777a", "#009b9c", "#00bfc0", "#1be5e5", "#7fffff"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "oklch(94.6% 0.026 276)", "tonalRamp": ["#080a16", "#222432", "#3e4150", "#5d6070", "#7e8192", "#a0a4b6", "#c4c8da", "#e9edff"] },
+      "ink-dim": { "role": "neutral", "displayName": "Dim Ink", "canonical": "oklch(76.7% 0.054 275)", "tonalRamp": ["#060721", "#1e223f", "#3a405f", "#585f80", "#7980a3", "#9ba3c7", "#bfc7ed", "#e4ecff"] },
+      "ink-faint": { "role": "neutral", "displayName": "Faint Ink", "canonical": "oklch(63.1% 0.066 274)", "tonalRamp": ["#050626", "#1c2145", "#373f65", "#565e87", "#7680aa", "#98a3cf", "#bcc7f5", "#e0ecff"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "rgba(232, 236, 255, .45)" },
+      "grid-line": { "role": "neutral", "displayName": "Drafting Grid Line", "canonical": "rgba(44, 55, 88, .3)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Wordmark", "purpose": "The OVERLAP sign only, condensed, unlit in edge with lit copies masked to light pools. Lobby size clamp(64px, 14vw, min(160px, 17vh))." },
+      "room-code": { "displayName": "Room Code", "purpose": "Lobby room code, condensed, user-select all." },
+      "headline": { "displayName": "Revision Title", "purpose": "Milestone card title, uppercase, amber." },
+      "title": { "displayName": "Title-block Value", "purpose": "Condensed uppercase values in title-block cells, district name, solo link." },
+      "section-heading": { "displayName": "Sheet Heading", "purpose": "General notes heading, uppercase, condensed." },
+      "note-label": { "displayName": "Note Label", "purpose": "NOTE / RADIO labels, uppercase amber with a 1px amber underline." },
+      "button": { "displayName": "Button", "purpose": "Default button lettering, condensed uppercase." },
+      "button-primary": { "displayName": "Primary Action", "purpose": "Play as Runner on the title sheet." },
+      "body": { "displayName": "Note Text", "purpose": "General notes and sheet sentences, max 62ch." },
+      "body-hud": { "displayName": "HUD Note Text", "purpose": "In-game notes and toasts over the canvas." },
+      "label": { "displayName": "Field Label", "purpose": "Title-block field labels, uppercase, faint ink. Identical on every screen." },
+      "value-mono": { "displayName": "Reading", "purpose": "Sheet numbers, counts, clock, step numbers, test values; tabular numerals." },
+      "code-input": { "displayName": "Code Entry", "purpose": "Room code field written on the line." }
+    },
+    "shadows": [
+      { "name": "lift", "value": "0 0 2px #0b1020, 0 1px 10px #0b1020, 0 0 18px rgba(11,16,32,.9)", "purpose": "Text-shadow halo behind HUD notes and toasts for legibility over the lit canvas. Not elevation." },
+      { "name": "plate-ring", "value": "0 0 0 1.5px #e8ecff, 0 0 0 10px #0b1020, 0 0 0 11px rgba(232,236,255,.45)", "purpose": "Mounts the lobby QR code as a bordered plate." },
+      { "name": "cell-hairline", "value": "inset -1px -1px 0 rgba(232,236,255,.45)", "purpose": "Draws hairline divisions between title-block cells. A rule, not depth." }
+    ],
+    "motion": [
+      { "name": "ease-out-drafting", "value": "cubic-bezier(.23, 1, .32, 1)", "purpose": "Default ease for press scale, note and toast entry, card reveal." },
+      { "name": "ease-blade", "value": "cubic-bezier(.34, 1.4, .64, 1)", "purpose": "Breaker switch blade closing with slight overshoot (500ms)." },
+      { "name": "press", "value": "transform 120ms, scale .97", "purpose": "Button active state." },
+      { "name": "state", "value": "150ms ease", "purpose": "Border, background, and color changes on hover." },
+      { "name": "toast", "value": "200ms", "purpose": "Toast fade and 6px rise." },
+      { "name": "note", "value": "opacity 300ms, transform 400ms", "purpose": "Note entry with a 6px drop." },
+      { "name": "card", "value": "opacity 350ms, transform 450ms", "purpose": "Revision card reveal from scale .97." },
+      { "name": "lamp-on", "value": "700ms flicker keyframes, staggered 250/550/900ms", "purpose": "Lit wordmark copies flicker on. Disabled under reduced motion." }
+    ],
+    "breakpoints": [
+      { "name": "zones-hidden", "value": "max-width: 599px (media)" },
+      { "name": "title-stack", "value": "max-width: 759px (media)" },
+      { "name": "hud-tiny", "value": "max-width: 339px (container)" },
+      { "name": "hud-compact", "value": "max-width: 479px (container)" },
+      { "name": "console-wrap", "value": "max-width: 559px (container)" },
+      { "name": "breaker-two-col", "value": "min-width: 900px (container)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Play as Runner: a red-edged title-block action with the red triangle glyph.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\"><svg viewBox=\"0 0 12 12\" aria-hidden=\"true\"><polygon points=\"6,1 11,11 1,11\"/></svg>Play as Runner</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 64px; padding: 4px 18px 0; font: 700 30px/1 \"DIN Condensed\", \"Bahnschrift\", \"Roboto Condensed\", \"Arial Narrow\", sans-serif; font-stretch: condensed; letter-spacing: .08em; text-transform: uppercase; color: #e8ecff; background: rgba(255,77,94,.08); border: 1.5px solid #ff4d5e; border-radius: 0; cursor: pointer; transition: background-color .15s ease, transform .12s cubic-bezier(.23,1,.32,1); } .ds-btn-primary svg { width: 20px; height: 20px; margin-top: -4px; fill: rgba(255,77,94,.3); stroke: #ff4d5e; stroke-width: 1.5; overflow: visible; } .ds-btn-primary:hover { background: rgba(255,77,94,.18); } .ds-btn-primary:focus-visible { outline: 2px solid #ffd38a; outline-offset: 3px; background: rgba(255,77,94,.18); } .ds-btn-primary:active { transform: scale(.97); }"
+    },
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Default outlined drafting button.",
+      "html": "<button class=\"ds-btn\" type=\"button\">Start now</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 2px 20px 0; font: 700 19px/1 \"DIN Condensed\", \"Bahnschrift\", \"Roboto Condensed\", \"Arial Narrow\", sans-serif; font-stretch: condensed; letter-spacing: .08em; text-transform: uppercase; color: #e8ecff; background: transparent; border: 1px solid rgba(232,236,255,.45); border-radius: 0; cursor: pointer; transition: border-color .15s ease, transform .12s cubic-bezier(.23,1,.32,1); } .ds-btn:hover { border-color: #ffd38a; } .ds-btn:focus-visible { outline: 2px solid #ffd38a; outline-offset: 3px; } .ds-btn:active { transform: scale(.97); }"
+    },
+    {
+      "name": "Code Input",
+      "kind": "input",
+      "refersTo": "input-code",
+      "description": "Room code written on the line: mono, letter-spaced, ink underline.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-k\">Join as Guide · room code</span><input class=\"ds-input-code\" placeholder=\"ABCD\" maxlength=\"4\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; } .ds-field-k { font: 600 11px/1 system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #7d87b2; } .ds-input-code { min-height: 48px; padding: 0 4px; font: 600 24px/1 ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; letter-spacing: .55em; text-indent: .2em; text-transform: uppercase; color: #e8ecff; caret-color: #ffd38a; background: transparent; border: 0; border-bottom: 1.5px solid #e8ecff; border-radius: 0; } .ds-input-code::placeholder { color: #7d87b2; opacity: 1; } .ds-input-code:focus-visible { outline: 2px solid #ffd38a; outline-offset: 3px; } .ds-input-code[aria-invalid=true] { border-bottom-color: #ff4d5e; }"
+    },
+    {
+      "name": "Title Block",
+      "kind": "card",
+      "refersTo": "title-block",
+      "description": "Bordered cells holding status: faint field label over a DIN or mono value.",
+      "html": "<div class=\"ds-tb\"><div class=\"ds-tb-cell\"><span class=\"ds-tb-k\">Players</span><span class=\"ds-tb-v\">Two</span></div><div class=\"ds-tb-cell\"><span class=\"ds-tb-k\">Screens</span><span class=\"ds-tb-v\">One or two</span></div><div class=\"ds-tb-cell\"><span class=\"ds-tb-k\">Time</span><span class=\"ds-tb-m\">04:12</span></div></div>",
+      "css": ".ds-tb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1.5px solid #e8ecff; background: #0b1020; color: #e8ecff; } .ds-tb-cell { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; box-shadow: inset -1px -1px 0 rgba(232,236,255,.45); } .ds-tb-k { font: 600 11px/1 system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #7d87b2; } .ds-tb-v { font: 700 17px/1 \"DIN Condensed\", \"Bahnschrift\", \"Roboto Condensed\", \"Arial Narrow\", sans-serif; font-stretch: condensed; letter-spacing: .08em; text-transform: uppercase; padding-top: 2px; } .ds-tb-m { font: 600 13px/1 ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; color: #ffd38a; }"
+    },
+    {
+      "name": "Console Signals",
+      "kind": "nav",
+      "refersTo": "button-signal-sent",
+      "description": "In-block buttons divided by hairlines; a sent signal fills amber.",
+      "html": "<div class=\"ds-sig\"><button type=\"button\">Wait</button><button type=\"button\" class=\"sent\">Go</button><button type=\"button\">Flare?</button></div>",
+      "css": ".ds-sig { display: inline-flex; height: 44px; border: 1.5px solid #e8ecff; background: rgba(11,16,32,.92); } .ds-sig button { min-width: 48px; padding: 2px 12px 0; border: 0; border-left: 1px solid rgba(232,236,255,.45); background: transparent; color: #e8ecff; font: 700 14px/1 \"DIN Condensed\", \"Bahnschrift\", \"Roboto Condensed\", \"Arial Narrow\", sans-serif; font-stretch: condensed; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: background-color .15s, color .15s, transform .12s cubic-bezier(.23,1,.32,1); } .ds-sig button:first-child { border-left: 0; } .ds-sig button:hover { background: rgba(255,211,138,.14); } .ds-sig button:focus-visible { outline: 2px solid #ffd38a; outline-offset: -3px; } .ds-sig button:active { transform: scale(.95); } .ds-sig button.sent { background: #ffd38a; color: #0b1020; }"
+    },
+    {
+      "name": "Note with Leader",
+      "kind": "custom",
+      "refersTo": "note-label",
+      "description": "Drawing note: amber underlined DIN label, sans sentence, amber leader to an arrowhead and ring.",
+      "html": "<div class=\"ds-note\"><span class=\"ds-note-lbl\">Note 2</span><span class=\"ds-note-say\">Switch the blue streetlight on to make the bridge appear.</span><svg class=\"ds-note-lead\" viewBox=\"0 0 200 90\" aria-hidden=\"true\"><path d=\"M40 0V10L140 64\"/><path d=\"M133 56l9 9-12 1z\" fill=\"#ffd38a\" stroke=\"none\"/><circle cx=\"152\" cy=\"72\" r=\"13\"/></svg></div>",
+      "css": ".ds-note { display: flex; flex-direction: column; gap: 5px; max-width: 500px; font: 13.5px/1.45 system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif; color: #e8ecff; text-shadow: 0 0 2px #0b1020, 0 1px 10px #0b1020, 0 0 18px rgba(11,16,32,.9); } .ds-note-lbl { align-self: flex-start; padding-bottom: 4px; border-bottom: 1px solid #ffd38a; font: 700 14px/1 \"DIN Condensed\", \"Bahnschrift\", \"Roboto Condensed\", \"Arial Narrow\", sans-serif; font-stretch: condensed; letter-spacing: .12em; text-transform: uppercase; color: #ffd38a; } .ds-note-say { text-wrap: pretty; } .ds-note-lead { width: 200px; height: 90px; fill: none; stroke: #ffd38a; stroke-width: 1.4; overflow: visible; }"
+    },
+    {
+      "name": "Dimension-line Toast",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Transient message under a dimension line with end ticks.",
+      "html": "<div class=\"ds-toast\">Ping sent</div>",
+      "css": ".ds-toast { position: relative; display: inline-block; padding: 7px 4px 0; text-align: center; font: 13.5px/1.45 system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif; color: #e8ecff; border-top: 1px solid rgba(232,236,255,.7); } .ds-toast::before, .ds-toast::after { content: \"\"; position: absolute; top: -5px; width: 1px; height: 9px; background: rgba(232,236,255,.7); } .ds-toast::before { left: 0; } .ds-toast::after { right: 0; }"
+    },
+    {
+      "name": "Lamp on Bus",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "One-line diagram fragment: ink bus, amber breaker square, lamp circle with an X in its light color.",
+      "html": "<svg class=\"ds-lamp\" viewBox=\"0 0 140 180\" fill=\"none\" stroke=\"#e8ecff\" stroke-width=\"1.5\"><path d=\"M0 34H140\"/><path d=\"M70 34V70\"/><rect x=\"62\" y=\"70\" width=\"16\" height=\"16\" fill=\"#ffd38a\" stroke=\"#ffd38a\"/><path d=\"M70 86V118\"/><circle cx=\"70\" cy=\"134\" r=\"16\" stroke=\"#4d8bff\"/><path d=\"M59 123l22 22M81 123l-22 22\" stroke=\"#4d8bff\"/><text x=\"62\" y=\"176\" fill=\"#a9b1d6\" stroke=\"none\" font-family=\"'DIN Condensed',Bahnschrift,'Arial Narrow',sans-serif\" font-size=\"19\" font-weight=\"700\">L1</text></svg>",
+      "css": ".ds-lamp { display: block; width: 140px; height: auto; background: #0b1020; }"
+    },
+    {
+      "name": "Steps",
+      "kind": "custom",
+      "refersTo": "step-current-marker",
+      "description": "Numbered steps: done ticks green, current fills amber, later wait faint.",
+      "html": "<ol class=\"ds-steps\"><li class=\"done\">Read the gauges to your Guide.</li><li class=\"cur\">Pull the lever.</li><li>Pull again once the key is in the rule.</li></ol>",
+      "css": ".ds-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; font: 14px/1.45 system-ui, sans-serif; } .ds-steps li { counter-increment: s; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: baseline; color: #7d87b2; } .ds-steps li::before { content: counter(s); font: 600 13px/1 ui-monospace, Menlo, monospace; color: #7d87b2; padding: 4px 0; text-align: center; border: 1px solid #2c3758; } .ds-steps li.cur { color: #e8ecff; font-size: 15px; } .ds-steps li.cur::before { color: #0b1020; background: #ffd38a; border-color: #ffd38a; } .ds-steps li.done::before { content: \"\"; align-self: stretch; max-height: 22px; border-color: transparent; background: #4dff88; -webkit-mask: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 7.5l3.2 3.2L12 4' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\") center/14px no-repeat; mask: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2 7.5l3.2 3.2L12 4' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\") center/14px no-repeat; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The One-Line Schematic Sheet",
+    "overview": "Every DOM surface of Overlap is a sheet from the city's electrical drawing set, laid over a night ground. The title is a drawing sheet with a heavy border, an inner hairline, and zone letters in the gap between them. Instructions are numbered general notes. Status lives in a title block of bordered cells. Tutorial notes reach the tile they mean with a leader line ending in an arrowhead and a ring. Transient messages sit under a dimension line. A milestone is a revision entered on the sheet. The Main Breaker is an actual one-line diagram with a switch blade, a gauge, and a lamp.\n\nThe sheet is dark, quiet, and line-drawn. Ink line work in two weights does all the structural work; there is no fill, no card, no chip, no rounded corner. Amber is the draftsman's highlight pen: note numbers, leaders, note-label underlines, focus rings, the current step. The light colors (red, green, blue and their additive mixes) belong to light itself and appear only as lamp symbols, colorblind glyphs, the lit wordmark, and state. The density is that of a drawing: lots of small technical lettering, generous air between groups, every value in mono.\n\nTypography runs in three voices. DIN condensed caps are the technical lettering for headings, labels on the drawing, buttons, and title-block values. System sans carries note text, the plain municipal sentences. Mono carries values, codes, readings, and numbering. The build refuses the dark-dashboard default of chips and bordered cards.",
+    "keyCharacteristics": [
+      "Night ground with a faint 32px drafting grid on non-game surfaces.",
+      "Two line weights: a 1.5px ink rule for borders and a 1px hairline for divisions.",
+      "Hard corners everywhere; the only circles are lamp symbols, status dots, and leader rings.",
+      "Amber marks what the drafter wants you to read next; light colors mean light.",
+      "DIN condensed caps for lettering, system sans for sentences, mono for values."
+    ],
+    "rules": [
+      { "name": "The Highlight Pen Rule", "body": "Amber marks only what the drafter points at: numbers, leaders, the active step, focus. It is never a fill for a panel or a large surface.", "section": "colors" },
+      { "name": "The Light Is Light Rule", "body": "Red, green, blue, and the mixes appear only as lamps, glyphs, lit lettering, and state (red for the primary action and for failure, green for done). They are not decoration.", "section": "colors" },
+      { "name": "The Three Voices Rule", "body": "DIN caps letter the drawing, sans says the sentence, mono gives the reading. A value is never set in sans and a sentence is never set in caps.", "section": "typography" },
+      { "name": "The Field Label Rule", "body": "Every title-block cell is a small faint label over a value. The label is 11px system-ui 600 caps at 0.16em, identical on every screen.", "section": "typography" },
+      { "name": "The Two Weights Rule", "body": "Structure is drawn with exactly two line weights: 1.5px ink for borders and frames, 1px hairline for internal divisions. No drop shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** draw every container as a title block or a sheet: 1.5px ink frame, 1px hairline divisions, square corners, night fill.",
+      "**Do** label every status value with an 11px faint system-ui caps field label at 0.16em.",
+      "**Do** point at the thing an instruction means with an amber leader line ending in an arrowhead and a ring.",
+      "**Do** set values, codes, readings, and numbering in mono with tabular numerals.",
+      "**Do** keep the 32px drafting grid on non-game sheets and keep it faint (edge at 30%).",
+      "**Do** pair every light color with its outlined glyph (triangle, circle, square).",
+      "**Do** keep touch targets at least 44px tall and gate flicker, breathing dots, and lantern drift behind reduced motion."
+    ],
+    "donts": [
+      "**Don't** use chips, pills, rounded cards, or filled panels; the build refuses the dark-dashboard default.",
+      "**Don't** use a light color as decoration or a panel accent; red, green, and blue mean light, action, failure, and done.",
+      "**Don't** fill large areas with amber; it is a highlight pen.",
+      "**Don't** add drop shadows for depth; the only shadows are the legibility halo and the QR plate ring.",
+      "**Don't** load web fonts or external assets; every face is a system stack and every icon is drawn in SVG or a CSS mask."
+    ]
+  }
+}
