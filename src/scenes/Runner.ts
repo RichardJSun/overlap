@@ -226,7 +226,7 @@ export class RunnerScene extends Phaser.Scene {
   private sendSnapshot() {
     this.net.send({
       t: "snapshot",
-      s: { district: this.di, runner: this.pos, lightsOn: [...this.lightsOn], substationsPowered: [...this.powered], drones: this.drones.map((d) => ({ id: d.def.id, p: d.tile })) },
+      s: { district: this.di, runner: this.pos, lightsOn: [...this.lightsOn], substationsPowered: [...this.powered], drones: this.drones.map((d) => ({ id: d.def.id, p: d.tile })), lantern: this.level.lantern },
     });
   }
 

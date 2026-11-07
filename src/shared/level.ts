@@ -10,6 +10,9 @@ export const LANTERN_RADIUS = 4;
  *   `#` wall (blocks movement and light)   `.` street   `~` gap (impassable unless a revealed bridge)
  *   `S` runner start (street)              `E` exit (street once every substation is powered)
  * Gates sit on `~` (bridge) or `.` (door). A hidden door blocks movement but not light.
+ * Filters are colored glass on a street tile: walking over one sets the lantern to its color. They
+ * stay put, so the runner can switch back. Only primaries (red, green, blue), so a lantern alone never
+ * reveals a mixed-color gate.
  */
 export type LevelJson = {
   name: string;
@@ -22,14 +25,17 @@ export type LevelJson = {
   gates: { x: number; y: number; kind: "bridge" | "door"; color: ColorMask }[];
   substations: { id: string; x: number; y: number; block: { x: number; y: number; w: number; h: number } }[];
   drones: { id: string; color: ColorMask; speed: number; path: Vec[] }[];
+  filters?: { x: number; y: number; color: ColorMask }[];
   signs?: { x: number; y: number; text: string }[];
 };
 
 export type Level = LevelJson & Grid & {
   start: Vec;
   exit: Vec;
+  filters: NonNullable<LevelJson["filters"]>;
   at(x: number, y: number): string;
   gateAt(x: number, y: number): LevelJson["gates"][number] | undefined;
+  filterAt(x: number, y: number): NonNullable<LevelJson["filters"]>[number] | undefined;
   /** Precomputed field per streetlight, keyed by id (streetlights never move). */
   lightFields: Map<string, Uint8Array>;
 };
@@ -44,10 +50,13 @@ export function loadLevel(j: LevelJson): Level {
   };
   const at = (x: number, y: number) => (x < 0 || y < 0 || x >= w || y >= h ? "#" : j.map[y][x]);
   const gates = new Map(j.gates.map((g) => [g.y * w + g.x, g]));
+  const filters = j.filters ?? [];
+  const filterMap = new Map(filters.map((f) => [f.y * w + f.x, f]));
   const level: Level = {
-    ...j, w, h, start: find("S"), exit: find("E"), at,
+    ...j, w, h, start: find("S"), exit: find("E"), at, filters,
     solid: (x, y) => at(x, y) === "#",
     gateAt: (x, y) => gates.get(y * w + x),
+    filterAt: (x, y) => filterMap.get(y * w + x),
     lightFields: new Map(),
   };
   for (const l of j.lights) level.lightFields.set(l.id, sourceField(level, l));
@@ -95,19 +104,38 @@ export function validateLevel(j: LevelJson): string[] {
     });
     if (!(d.speed > 0)) e.push(`drone ${d.id} speed must be > 0`);
   }
+  const special = new Set([...j.gates, ...j.substations].map((p) => `${p.x},${p.y}`));
+  for (const f of j.filters ?? []) {
+    if (![1, 2, 4].includes(f.color)) e.push(`filter at ${f.x},${f.y} must be red (4), green (2) or blue (1)`);
+    if (!inside(f.x, f.y) || at(f.x, f.y) !== ".") e.push(`filter at ${f.x},${f.y} must sit on a street tile`);
+    if (special.has(`${f.x},${f.y}`)) e.push(`filter at ${f.x},${f.y} shares a tile with a gate or substation`);
+    if (special.has(`f${f.x},${f.y}`)) e.push(`duplicate filter at ${f.x},${f.y}`);
+    special.add(`f${f.x},${f.y}`);
+  }
   return e;
 }
 
 /** Light sources for the current state: the runner's lantern plus every streetlight that is on. */
-export function sources(level: Level, runner: Vec, lightsOn: Iterable<string>): LightSource[] {
+export function sources(level: Level, runner: Vec, lightsOn: Iterable<string>, lantern: ColorMask = level.lantern): LightSource[] {
   const on = new Set(lightsOn);
   return [
-    { x: runner.x, y: runner.y, color: level.lantern, radius: LANTERN_RADIUS },
+    { x: runner.x, y: runner.y, color: lantern, radius: LANTERN_RADIUS },
     ...level.lights.filter((l) => on.has(l.id)),
   ];
 }
 
 export const budgetFor = (level: Level, powered: number) => level.budget + powered * level.budgetPerSubstation;
+
+/**
+ * Whether the control room can see the runner at `p`: streetlights double as its cameras, and a
+ * powered block is back on the grid. The runner's own lantern doesn't count.
+ */
+export function onCamera(level: Level, p: Vec, lightsOn: Iterable<string>, powered: Iterable<string>): boolean {
+  const i = p.y * level.w + p.x;
+  for (const id of lightsOn) if (level.lightFields.get(id)?.[i]) return true;
+  const on = new Set(powered);
+  return level.substations.some((s) => on.has(s.id) && p.x >= s.block.x && p.y >= s.block.y && p.x < s.block.x + s.block.w && p.y < s.block.y + s.block.h);
+}
 
 /** Whether the runner may stand on (x, y) given the light there. */
 export function passable(level: Level, x: number, y: number, lit: ColorMask, exitOpen: boolean): boolean {
@@ -136,64 +164,68 @@ export function dronePos(d: LevelJson["drones"][number], t: number): Vec {
 }
 
 export type Action = { move: Vec } | { toggle: string };
-export type PlanState = { pos: Vec; lightsOn: string[]; powered: string[] };
+export type PlanState = { pos: Vec; lightsOn: string[]; powered: string[]; lantern?: ColorMask };
+type Node = [pos: number, lights: number, subs: number, lantern: ColorMask];
 
 /**
- * BFS over (runner tile, set of lights on, substations powered). The guide may toggle lights at any
- * time within budget, except to strand the runner on a gate. Drones are timing hazards and are not modelled. Returns the shortest list of
- * actions (moves and toggles) from `from` (default: district start) to the exit, or null.
+ * BFS over (runner tile, lights on, substations powered, lantern color). The guide may toggle lights
+ * at any time within budget, except to strand the runner on a gate. Stepping on a filter recolors the
+ * lantern. Drones are timing hazards and are not modelled. Returns the shortest list of actions
+ * (moves and toggles) from `from` (default: district start) to the exit, or null.
  * `maxLights` caps the budget, e.g. 0 to prove the district needs the guide.
  */
 export function plan(level: Level, opts: { maxLights?: number; from?: PlanState } = {}): Action[] | null {
   const { w } = level;
   const ids = level.lights.map((l) => l.id);
   const fields = ids.map((id) => level.lightFields.get(id)!);
-  const lantern = new Map<number, Uint8Array>();
-  const lanternAt = (x: number, y: number) => {
-    const k = y * w + x;
-    let f = lantern.get(k);
-    if (!f) lantern.set(k, (f = sourceField(level, { x, y, color: level.lantern, radius: LANTERN_RADIUS })));
+  const lanternCache = new Map<number, Uint8Array>();
+  const lanternAt = (x: number, y: number, c: ColorMask) => {
+    const k = (y * w + x) * 8 + c;
+    let f = lanternCache.get(k);
+    if (!f) lanternCache.set(k, (f = sourceField(level, { x, y, color: c, radius: LANTERN_RADIUS })));
     return f;
   };
   const subIdx = new Map(level.substations.map((s, i) => [s.y * w + s.x, i]));
   const allSubs = (1 << level.substations.length) - 1;
   const pop = (m: number) => { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; };
-  const key = (pos: number, lights: number, subs: number) => (pos * (1 << ids.length) + lights) * 4 + subs;
+  const key = (pos: number, lights: number, subs: number, c: ColorMask) => ((pos * (1 << ids.length) + lights) * 4 + subs) * 8 + c;
 
   const f = opts.from;
-  const startPos = f ? f.pos.y * w + f.pos.x : level.start.y * w + level.start.x;
-  const startLights = f ? ids.reduce((m, id, i) => (f.lightsOn.includes(id) ? m | (1 << i) : m), 0) : 0;
-  const startSubs = f ? level.substations.reduce((m, s, i) => (f.powered.includes(s.id) ? m | (1 << i) : m), 0) : 0;
-  const k0 = key(startPos, startLights, startSubs);
-  const parent = new Map<number, [number, Action] | null>([[k0, null]]);
-  let frontier: [number, number, number][] = [[startPos, startLights, startSubs]];
+  const start: Node = [
+    f ? f.pos.y * w + f.pos.x : level.start.y * w + level.start.x,
+    f ? ids.reduce((m, id, i) => (f.lightsOn.includes(id) ? m | (1 << i) : m), 0) : 0,
+    f ? level.substations.reduce((m, s, i) => (f.powered.includes(s.id) ? m | (1 << i) : m), 0) : 0,
+    f?.lantern ?? level.lantern,
+  ];
+  const parent = new Map<number, [number, Action] | null>([[key(...start), null]]);
+  let frontier: Node[] = [start];
   const exit = level.exit.y * w + level.exit.x;
   while (frontier.length) {
-    const next: [number, number, number][] = [];
-    for (const [pos, lights, subs] of frontier) {
-      const here = key(pos, lights, subs);
+    const next: Node[] = [];
+    for (const [pos, lights, subs, lan] of frontier) {
+      const here = key(pos, lights, subs, lan);
       if (pos === exit) {
         const out: Action[] = [];
         for (let k = here, p = parent.get(k); p; k = p[0], p = parent.get(k)) out.push(p[1]);
         return out.reverse();
       }
       const x = pos % w, y = (pos - x) / w;
-      const push = (p: number, l: number, s: number, a: Action) => { const k = key(p, l, s); if (!parent.has(k)) { parent.set(k, [here, a]); next.push([p, l, s]); } };
+      const push = (n: Node, a: Action) => { const k = key(...n); if (!parent.has(k)) { parent.set(k, [here, a]); next.push(n); } };
       const budget = Math.min(budgetFor(level, pop(subs)), opts.maxLights ?? Infinity);
-      const lf = lanternAt(x, y);
+      const lf = lanternAt(x, y, lan);
       const litWith = (ls: number, at: number) => { let c = lf[at]; for (let i = 0; i < ids.length; i++) if (ls & (1 << i)) c |= fields[i][at]; return c; };
       for (let i = 0; i < ids.length; i++) {
         const bit = 1 << i;
         // Switching off the light that holds up the runner's bridge or door sends them back, so never plan it.
-        if (lights & bit) { if (passable(level, x, y, litWith(lights & ~bit, pos), subs === allSubs)) push(pos, lights & ~bit, subs, { toggle: ids[i] }); }
-        else if (pop(lights) < budget) push(pos, lights | bit, subs, { toggle: ids[i] });
+        if (lights & bit) { if (passable(level, x, y, litWith(lights & ~bit, pos), subs === allSubs)) push([pos, lights & ~bit, subs, lan], { toggle: ids[i] }); }
+        else if (pop(lights) < budget) push([pos, lights | bit, subs, lan], { toggle: ids[i] });
       }
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy, ni = ny * w + nx;
         if (nx < 0 || ny < 0 || nx >= w || ny >= level.h) continue;
         if (!passable(level, nx, ny, litWith(lights, ni), subs === allSubs)) continue;
         const si = subIdx.get(ni);
-        push(ni, lights, si === undefined ? subs : subs | (1 << si), { move: { x: dx, y: dy } });
+        push([ni, lights, si === undefined ? subs : subs | (1 << si), level.filterAt(nx, ny)?.color ?? lan], { move: { x: dx, y: dy } });
       }
     }
     frontier = next;

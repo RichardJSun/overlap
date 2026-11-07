@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { B, G, R, mix, reveals } from "../src/shared/color.ts";
 import { lightField, type Grid } from "../src/shared/lighting.ts";
-import { dronePos, loadLevel, solve, validateLevel, type LevelJson } from "../src/shared/level.ts";
+import { dronePos, loadLevel, onCamera, solve, validateLevel, type LevelJson } from "../src/shared/level.ts";
 import { LEVELS } from "../src/levels/index.ts";
 
 const grid = (rows: string[]): Grid => ({ w: rows[0].length, h: rows.length, solid: (x, y) => rows[y]?.[x] === "#" });
@@ -60,5 +60,37 @@ describe("levels", () => {
     it(`district ${i + 1} (${level.name}) cannot be solved without the guide`, () => {
       expect(solve(level, { maxLights: 0 })).toBe(-1);
     });
+  });
+});
+
+describe("lantern filters", () => {
+  // Blue lantern + red streetlight is magenta, which can't open the yellow door. Picking up the
+  // green filter makes green + red = yellow.
+  const corridor = (filters: LevelJson["filters"]): LevelJson => ({
+    name: "corridor", lantern: 1, budget: 1, budgetPerSubstation: 0,
+    map: ["###########", "#S.......E#", "###########"],
+    lights: [{ id: "L", x: 7, y: 1, color: 4, radius: 2 }],
+    gates: [{ x: 8, y: 1, kind: "door", color: 6 }],
+    substations: [{ id: "P", x: 5, y: 1, block: { x: 4, y: 0, w: 3, h: 3 } }],
+    drones: [], filters,
+  });
+  it("a filter recolors the lantern and opens a mix the old color couldn't", () => {
+    expect(solve(loadLevel(corridor([{ x: 3, y: 1, color: 2 }])))).toBeGreaterThan(0);
+    expect(solve(loadLevel(corridor([])))).toBe(-1);
+    expect(solve(loadLevel(corridor([{ x: 3, y: 1, color: 2 }])), { maxLights: 0 })).toBe(-1);
+  });
+  it("validator rejects mixed-color filters and filters on gates", () => {
+    expect(validateLevel(corridor([{ x: 3, y: 1, color: 6 }])).join()).toMatch(/must be red/);
+    expect(validateLevel(corridor([{ x: 8, y: 1, color: 2 }])).join()).toMatch(/shares a tile/);
+  });
+});
+
+describe("cameras", () => {
+  const d1 = LEVELS[0];
+  it("streetlights and powered blocks see the runner; the lantern alone doesn't", () => {
+    expect(onCamera(d1, { x: 11, y: 7 }, ["L1"], [])).toBe(true);
+    expect(onCamera(d1, { x: 2, y: 2 }, ["L1"], [])).toBe(false);
+    expect(onCamera(d1, { x: 11, y: 7 }, [], [])).toBe(false);
+    expect(onCamera(d1, { x: 17, y: 3 }, [], ["S1"])).toBe(true);
   });
 });

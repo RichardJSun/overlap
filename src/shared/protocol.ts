@@ -12,6 +12,8 @@ export type Msg =
   | { t: "light"; id: string; on: boolean }
   | { t: "substation"; id: string }
   | { t: "district"; index: number }
+  | { t: "lantern"; c: number } // runner picked up a filter
+  | { t: "flare"; p: Vec } // runner flashed their lantern so the guide can find them
   | { t: "ending" };
 
 export type Snapshot = {
@@ -20,4 +22,5 @@ export type Snapshot = {
   lightsOn: string[];
   substationsPowered: string[];
   drones: { id: string; p: Vec }[];
+  lantern: number;
 };

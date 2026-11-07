@@ -44,3 +44,11 @@ Empty repo. Plan and rules live in [HANDOFF.md](../HANDOFF.md).
 
 ![District 1, art pass](shots/d1-magenta-bridge.png)
 ![Title, UI pass](shots/title.png)
+
+## 13:40 Protocol change: lantern filters and flares
+Design calls from Richard: the Guide sees the Runner only "on camera", inside a lit streetlight or a powered block. The Runner can flare to show where they are. Lantern color changes through filter pickups. Darkness is pitch black and roofs stay dark. District 1 becomes a guided tutorial.
+- Level format: optional `filters: {x, y, color}[]`, primaries only, so a lantern alone never reveals a mixed gate. They are not consumed.
+- Solver: lantern color joins the BFS state `(tile, lights on, substations, lantern)`. A new test shows a corridor that is unsolvable until the lantern picks up a green filter.
+- `onCamera()` is a pure function next to the solver. The lantern doesn't count, by design.
+- Protocol: `Snapshot.lantern`, `{t:"lantern", c}` when the Runner picks up a filter, and `{t:"flare", p}`.
+- The tag `submittable-v1` marks the live build from before these changes, in case they don't land.
