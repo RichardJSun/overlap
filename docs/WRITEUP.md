@@ -6,7 +6,7 @@
 - Two devices: on a laptop press **Play as Runner**, then scan the QR code with a phone (the Guide). Or type the 4-letter code under **Join as Guide**.
 - One screen: https://overlap.richardsun.workers.dev/?local=1 shows both roles side by side.
 - Runner: arrows / WASD, or tap a tile. Guide: tap a tile to ping, tap a streetlight to switch it.
-- Source: (GitHub link)
+- Source: https://github.com/My-Name-Is-Jeff/overlap
 
 ## Inspiration
 
