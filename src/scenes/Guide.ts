@@ -17,7 +17,7 @@ import { fitCamera, HUD_TOP } from "./fit.ts";
 
 const PING_COOLDOWN = 2000;
 const FLARE_MS = 2500;
-const HUD_BOTTOM = 64;
+const HUD_BOTTOM = 44;
 
 /** The Guide: sees the city and the drones, owns streetlights and pings, sees the Runner only on camera. */
 export class GuideScene extends Phaser.Scene {
@@ -50,6 +50,7 @@ export class GuideScene extends Phaser.Scene {
   private ghost!: Phaser.GameObjects.Image;
   private ghostLabel!: Phaser.GameObjects.Text;
   private trail: Phaser.GameObjects.Arc[] = [];
+  private exitGlow = { x: 0, y: 0, w: 3, h: 3 };
   private drones = new Map<string, { img: Phaser.GameObjects.Image; warn: Phaser.GameObjects.Image; color: number; tile: Vec }>();
 
   constructor() { super("guide"); }
@@ -59,7 +60,7 @@ export class GuideScene extends Phaser.Scene {
   create() {
     makeTextures(this);
     addPost(this, "guide");
-    this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room);
+    this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room, this.data_.local);
     this.events.once("shutdown", () => this.hud.destroy());
     this.tutor = new Tutor(this, this.hud, "guide");
     this.net.onMessage((m) => this.onMsg(m));
@@ -72,8 +73,10 @@ export class GuideScene extends Phaser.Scene {
     this.lanternRing = this.add.image(0, 0, "ping").setDepth(19).setScale(0.55).setAlpha(0.9);
     this.runner = this.add.image(0, 0, "runner").setDepth(20);
     this.ghost = this.add.image(0, 0, "runner").setDepth(18).setAlpha(0.28).setTint(0x7d87b2);
-    this.ghostLabel = this.add.text(0, 0, "", { fontFamily: "ui-monospace, Menlo, monospace", fontSize: "15px", color: "#a9b1d6", stroke: "#0b1020", strokeThickness: 4 }).setOrigin(0.5, 2.2).setDepth(18).setResolution(2);
-    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.tap(p));
+    this.ghostLabel = this.add.text(0, 0, "", { fontFamily: "ui-monospace, Menlo, monospace", fontSize: "15px", color: "#a9b1d6", stroke: "#0b1020", strokeThickness: 4 }).setOrigin(0.5, -1.1).setDepth(18).setResolution(2);
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => { if (p.rightButtonDown()) this.tap(p, true); else if (!p.wasTouch) this.tap(p); });
+    this.input.on("pointerup", (p: Phaser.Input.Pointer) => { if (p.wasTouch) this.tap(p, p.getDuration() > 450); });
     this.scale.on("resize", () => this.fit());
     this.loadDistrict(0);
   }
@@ -94,6 +97,7 @@ export class GuideScene extends Phaser.Scene {
     this.lightsOn.clear();
     this.powered.clear();
     this.lantern = this.level.lantern;
+    this.exitGlow = { x: this.level.exit.x - 1, y: this.level.exit.y - 1, w: 3, h: 3 };
     this.map = new MapView(this, this.level, { glyphs: true }).setDepth(0);
     this.map.base.setAlpha(0.55);
     for (const f of this.level.filters) this.map.base.add(this.add.image(f.x * TILE + TILE / 2, f.y * TILE + TILE / 2, `filter-${f.color}`));
@@ -110,11 +114,11 @@ export class GuideScene extends Phaser.Scene {
     this.moveRunner(this.level.start, false);
     this.lastSeenAt = this.time.now;
     this.lastSeenPos = { ...this.level.start };
+    this.seen = false;
     this.fit();
     this.coach = { pinged: false, flared: false };
     this.tutor.setDistrict(i);
     this.hud.district(i, this.level.name, this.level.intro);
-    this.hud.hint(`Tap a streetlight to switch it · tap elsewhere to ping · you see the Runner only under a lit streetlight or in a powered block${this.level.drones.length ? " · amber ring: a drone the Runner can't see" : ""}`);
     this.redraw();
   }
 
@@ -130,27 +134,29 @@ export class GuideScene extends Phaser.Scene {
     this.lanternRing.setVisible(seen).setTint(hex(this.lantern));
     // The ghost stays where the cameras last saw the runner; it must not follow the hidden sprite.
     const gx = this.lastSeenPos.x * TILE + TILE / 2, gy = this.lastSeenPos.y * TILE + TILE / 2;
-    this.ghost.setVisible(!seen).setPosition(gx, gy);
-    this.ghostLabel.setVisible(!seen).setPosition(gx, gy);
+    const ghost = !seen && (this.peer || !!this.data_.local);
+    this.ghost.setVisible(ghost).setPosition(gx, gy);
+    this.ghostLabel.setVisible(ghost).setPosition(gx, gy);
     // The lantern's own pool would give the runner away, so it shows only while they're on camera.
     const lit = sources(this.level, this.runnerPos, this.lightsOn, this.lantern);
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
+    if (this.powered.size === this.level.substations.length) glow.push(this.exitGlow);
     this.lightLayer!.draw(seen ? lit : lit.slice(1), glow);
     const field = lightField(this.level, lit);
     for (const d of this.drones.values()) d.warn.setVisible(seen && !droneVisible(field[d.tile.y * this.level.w + d.tile.x], d.color));
     this.hud.budget(this.lightsOn.size, this.budget);
     const left = this.level.substations.length - this.powered.size;
-    this.hud.objective(`${left ? `Get the Runner to the substation ⚡ · ${this.powered.size}/${this.level.substations.length}` : "Guide the Runner to the exit"} · lantern ${NAMES[this.lantern]}`, !left);
+    this.hud.objective(`${left ? `Substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Exit open"} · lantern ${NAMES[this.lantern]}`, !left);
   }
 
-  private tap(p: Phaser.Input.Pointer) {
+  private tap(p: Phaser.Input.Pointer, danger = false) {
     sfx.unlock();
     if (!this.data_.local && !this.awake) { this.awake = true; sfx.ambient((this.di + this.powered.size / this.level.substations.length) / LEVELS.length); }
     const w = this.cameras.main.getWorldPoint(p.x, p.y);
     const fx = w.x / TILE, fy = w.y / TILE;
     if (fx < 0 || fy < 0 || fx >= this.level.w || fy >= this.level.h) return;
-    // Streetlights are small on a phone, so a touch snaps to one within a tile and a half.
-    const reach = p.wasTouch ? 1.5 : 0.9;
+    // Streetlights are small on a phone, so a touch snaps to one a little outside its tile.
+    const reach = danger ? 0 : p.wasTouch ? 1.1 : 0.9;
     const lamp = this.level.lights
       .map((l) => ({ l, d: Math.hypot(l.x + 0.5 - fx, l.y + 0.5 - fy) }))
       .filter((c) => c.d < reach)
@@ -161,9 +167,9 @@ export class GuideScene extends Phaser.Scene {
     this.lastPing = this.time.now;
     this.coach.pinged = true;
     this.hud.ping(PING_COOLDOWN);
-    this.net.send({ t: "ping", id: Math.random().toString(36).slice(2, 8), p: tile });
-    if (!this.data_.local) sfx.ping();
-    this.showPing(tile);
+    this.net.send({ t: "ping", id: Math.random().toString(36).slice(2, 8), p: tile, danger });
+    if (!this.data_.local) { if (danger) sfx.denied(); else sfx.ping(); }
+    this.showPing(tile, danger ? 0xff4d5e : 0xffffff);
   }
 
   private toggle(id: string) {
@@ -188,7 +194,11 @@ export class GuideScene extends Phaser.Scene {
 
   private moveRunner(p: Vec, animate = true) {
     const jumped = Math.abs(p.x - this.runnerPos.x) + Math.abs(p.y - this.runnerPos.y) > 1;
-    if (animate && jumped) this.hud.toast("The Runner was caught and sent back to the checkpoint.");
+    if (animate && jumped) {
+      this.hud.toast("The Runner was caught and sent back to the checkpoint.");
+      this.lastSeenPos = { ...p };
+      this.lastSeenAt = this.time.now;
+    }
     if (animate && this.seen && !jumped) {
       const dot = this.add.circle(this.runner.x, this.runner.y, 4, 0xe8ecff, 0.6).setDepth(19);
       this.trail.push(dot);

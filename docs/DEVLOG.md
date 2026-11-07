@@ -82,3 +82,21 @@ Mistake of the hour: a scratch worktree's `node_modules` was a symlink, which th
 - **Two-browser check on production** (`scripts/net-check.mjs`): the Runner starts from the title, the Guide joins by link on an iPhone-sized viewport, and moves, the off-camera rule, flares, and streetlights all cross the real Worker.
 
 ![Network check, Guide on a phone](shots/net-guide-phone.png)
+
+## 14:40 Second playtest, and a quieter HUD
+A second fresh agent played the live build: the tutorial, filters, cameras, and the phone Guide. Fixes:
+- **The tutorial skipped the color lesson, then went blank twice.** The bridge step waited until the Runner was near the bridge, by which time the Guide had already lit it. After crossing, the step "undid" itself as the bridge went dark behind them. Now the step shows right after the ping, and "the bridge has opened" sticks once it happens.
+- **"Power 1/2" read as substations.** It's now **Lights**.
+- **"Ping a warning" had no warning.** Right-click (or hold on a phone) now sends a **danger ping**: a red "!" and a buzz on the Runner's side.
+- **"The exit is lit" lit nothing.** The open exit now glows warm on both screens.
+- **The "last seen" ghost:** hidden until a Runner is in the room, reset each district, moved to the checkpoint after a catch, and its label moved below it so the tutorial pointer doesn't cover it.
+- **Phone:** the streetlight tap target shrank from 1.5 to 1.1 tiles, so you can ping next to one.
+- **Copy:** gates need *all* their colors in the light (extra colors don't hurt). The title and README now say that instead of "the right mix".
+
+Richard's notes, also done:
+- The Runner's tutorial pointer no longer marks tiles that are dark for the Runner (it was pointing at the substation and exit through the blackout).
+- Two computers is the main way to play: the lobby leads with a copyable link, and the QR code is the phone option.
+- **The HUD showed too much at once.** We removed the Guide's two-line instruction strip, which repeated the tutorial, title, and tips. The Guide's bottom bar is one row, giving the map 20px more on phones. Goal lines are a few words. The connection pill is hidden in one-screen mode.
+- **Filters gave colors the streetlights already had.** Districts 2 and 3 are being redesigned so the Runner's glass colors and the city's streetlight colors never overlap, enforced by the validator.
+
+![Quieter HUD](shots/d1-magenta-bridge.png)

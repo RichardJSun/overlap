@@ -129,9 +129,9 @@ export function showTitle(root: HTMLElement, start: Start): void {
     el("h2", { textContent: "How to play" }),
     el("dl", { className: "ov-roles" },
       el("div", {}, el("dt", {}, tape("Runner")), el("dd", { textContent: "Walks the dark streets with a lantern and sees only what light reaches. Arrows or WASD, or tap to move. Space flares so the Guide can find you. Colored glass on the street changes your lantern." })),
-      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Runs the grid from the control room. Sees the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Tap to ping, tap a streetlight to switch it, within the power budget." })),
+      el("div", {}, el("dt", {}, tape("Guide")), el("dd", { textContent: "Runs the grid from the control room. Sees the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Tap to ping, right-click or hold to warn, tap a streetlight to switch it, within the power budget." })),
     ),
-    el("p", { className: "ov-rule", textContent: "Light adds up. Bridges and doors only exist in the right mix." }),
+    el("p", { className: "ov-rule", textContent: "Light adds up. A bridge or door appears when all its colors are in the light: magenta needs red and blue on it." }),
     el("ul", { className: "ov-mixes" }, mixRow(R, B), mixRow(R, G), mixRow(G, B)),
   );
 

@@ -2,7 +2,7 @@ import { sfx } from "./audio/sfx.ts";
 import type { NetStatus } from "./net/transport.ts";
 import type { Role } from "./shared/protocol.ts";
 
-// Heights are load-bearing: src/scenes/fit.ts reserves 44px on top and the Guide reserves 64px below.
+// Heights are load-bearing: src/scenes/fit.ts reserves 44px on top and the Guide reserves 44px below.
 const CSS = `
 .hud{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--street:#141a2e;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;
   --tape:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;
@@ -38,10 +38,10 @@ const CSS = `
   background:rgba(11,16,32,.92);border:1px solid var(--edge);color:var(--ink);text-align:center;line-height:1.4;
   opacity:0;transform:translate(-50%,6px);transition:opacity .2s ease,transform .2s var(--ease)}
 .hud .toast.show{opacity:1;transform:translate(-50%,0)}
-.hud.guide .toast{bottom:100px}
+.hud.guide .toast{bottom:80px}
 .hud.runner .toast{bottom:52px}
 .hud .objective{position:absolute;left:12px;bottom:14px;max-width:calc(100% - 24px);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hud.guide .objective{bottom:72px}
+.hud.guide .objective{bottom:52px}
 .hud .objective .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
 .hud .objective.done .lbl{color:var(--green)}
 .hud .coach{position:absolute;left:50%;top:52px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:10px 14px 10px 12px;
@@ -55,10 +55,10 @@ const CSS = `
 .hud .card.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .hud .card h3{margin:0;font:700 26px/1 var(--tape);font-stretch:condensed;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .hud .card p{margin:8px 0 0;font-size:13px;color:var(--dim)}
-.hud .bottom{position:absolute;left:0;right:0;bottom:0;height:64px;box-sizing:border-box;padding:6px 12px;display:grid;grid-template-rows:auto 1fr;gap:4px;
+.hud .bottom{position:absolute;left:0;right:0;bottom:0;height:44px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;
   background:var(--night);border-top:1px solid var(--edge)}
-.hud .hint{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:11px;line-height:12px;color:var(--faint);text-wrap:balance}
-.hud .deck{display:flex;align-items:center;gap:10px;min-width:0}
+.hud .deck{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.hud.local .net{display:none}
 .hud .lbl{font:700 12px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding-top:2px}
 .hud .bars{display:flex;gap:4px}
 .hud .bar{position:relative;width:16px;height:22px;box-sizing:border-box;background:var(--wall);border:1px solid var(--edge);transition:background-color .16s,border-color .16s}
@@ -74,7 +74,7 @@ const CSS = `
 .hud .ping.charging .lbl{color:var(--faint)}
 .hud .ping.charging .meter i{background:var(--faint)}
 .hud .clock{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber);min-width:5ch;text-align:right}
-@container (max-width:479px){.hud .role,.hud .room{display:none}}
+@container (max-width:479px){.hud .role,.hud .room{display:none}.hud .coach{top:48px;padding:7px 10px;font-size:12px;line-height:1.4}.hud .intro{font-size:12px}}
 @container (max-width:339px){.hud .net{font-size:0;gap:0}}
 @media (prefers-reduced-motion:reduce){.hud *,.hud *::before,.hud *::after{animation:none!important;transition-property:opacity,background-color,border-color,color!important}}
 `;
@@ -88,16 +88,17 @@ export class Hud {
   private toastTimer = 0;
   private introTimer = 0;
 
-  constructor(pane: HTMLElement, readonly role: Role, room?: string) {
+  constructor(pane: HTMLElement, readonly role: Role, room?: string, local = false) {
     if (!document.getElementById("hud-css")) {
       const s = document.createElement("style"); s.id = "hud-css"; s.textContent = CSS; document.head.appendChild(s);
     }
     this.el = document.createElement("div");
-    this.el.className = `hud ${role}`;
+    // One screen, both roles: the connection pill would always say "connected", so it's hidden.
+    this.el.className = `hud ${role}${local ? " local" : ""}`;
     this.el.innerHTML = `
       <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
       <div class="intro off"></div><div class="coach off" role="status"><span class="lbl"></span><span class="say"></span></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
-      ${role === "guide" ? `<div class="bottom"><div class="hint"></div><div class="deck"><span class="lbl">Power</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
+      ${role === "guide" ? `<div class="bottom"><div class="deck"><span class="lbl">Lights</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
       const r = this.q(".room");
@@ -186,7 +187,6 @@ export class Hud {
     window.setTimeout(() => el.classList.remove("show"), ms);
   }
 
-  hint(text: string) { const el = this.q(".hint"); if (el) el.textContent = text; }
   clock(text: string) { const el = this.q(".clock"); if (el) el.textContent = text; }
   destroy() { this.el.remove(); }
 }

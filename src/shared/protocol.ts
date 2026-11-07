@@ -8,7 +8,7 @@ export type Msg =
   | { t: "snapshot"; s: Snapshot } // runner -> server -> guide
   | { t: "runner_move"; p: Vec }
   | { t: "drones"; d: { id: string; p: Vec }[] }
-  | { t: "ping"; id: string; p: Vec }
+  | { t: "ping"; id: string; p: Vec; danger?: boolean } // danger: "stop, don't go here"
   | { t: "light"; id: string; on: boolean }
   | { t: "substation"; id: string }
   | { t: "district"; index: number }

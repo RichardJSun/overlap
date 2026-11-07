@@ -52,12 +52,14 @@ export class RunnerScene extends Phaser.Scene {
   private transitioning = false;
   private awake = false;
   private tutor!: Tutor;
-  private coach = { moved: 0, flared: false, pinged: false };
+  private coach = { moved: 0, flared: false, pinged: false, bridgeOpen: false };
 
   private map?: MapView;
   private lightLayer?: LightLayer;
   private runner!: Phaser.GameObjects.Image;
   private filterImgs: Phaser.GameObjects.Image[] = [];
+  /** Warm light around the exit once it opens, so "the exit is lit" is something you can see. */
+  private exitGlow = { x: 0, y: 0, w: 3, h: 3 };
   private drones: { def: Level["drones"][number]; img: Phaser.GameObjects.Image; tile: Vec }[] = [];
   private dronesDirty = false;
   private lastDroneSend = 0;
@@ -77,7 +79,7 @@ export class RunnerScene extends Phaser.Scene {
   create() {
     makeTextures(this);
     addPost(this, "runner");
-    this.hud = new Hud(this.game.canvas.parentElement!, "runner", this.data_.room);
+    this.hud = new Hud(this.game.canvas.parentElement!, "runner", this.data_.room, this.data_.local);
     this.events.once("shutdown", () => this.hud.destroy());
     this.tutor = new Tutor(this, this.hud, "runner");
     const kb = this.input.keyboard!;
@@ -144,6 +146,7 @@ export class RunnerScene extends Phaser.Scene {
     this.filterImgs = this.level.filters.map((f) => this.add.image(f.x * TILE + TILE / 2, f.y * TILE + TILE / 2, `filter-${f.color}`).setDepth(2));
     this.drones = this.level.drones.map((def) => ({ def, img: this.add.image(0, 0, `drone-${def.color}`).setDepth(15).setVisible(false), tile: { ...def.path[0] } }));
     this.pos = { ...this.level.start };
+    this.exitGlow = { x: this.level.exit.x - 1, y: this.level.exit.y - 1, w: 3, h: 3 };
     this.lantern = this.level.lantern;
     this.checkpoint = { pos: { ...this.pos }, lantern: this.lantern };
     this.runner.setPosition(this.pos.x * TILE + TILE / 2, this.pos.y * TILE + TILE / 2);
@@ -153,7 +156,7 @@ export class RunnerScene extends Phaser.Scene {
     this.fit();
     this.hud.district(i, this.level.name, this.level.intro);
     this.updateObjective();
-    this.coach = { moved: 0, flared: false, pinged: false };
+    this.coach = { moved: 0, flared: false, pinged: false, bridgeOpen: false };
     this.tutor.setDistrict(i);
     if (this.awake) sfx.ambient(this.progress);
   }
@@ -165,7 +168,7 @@ export class RunnerScene extends Phaser.Scene {
 
   private updateObjective() {
     const left = this.level.substations.length - this.powered.size;
-    this.hud.objective(left ? `Find the substation ⚡ · ${this.powered.size}/${this.level.substations.length} powered` : "The exit is lit. Find it.");
+    this.hud.objective(left ? `Power the substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Reach the exit", !left);
   }
 
   /** How much of the whole city is back on, 0..1, for the ambient pad. */
@@ -311,6 +314,7 @@ export class RunnerScene extends Phaser.Scene {
       // Standing on a bridge or door that just lost its light.
       if (!this.canEnter(this.pos.x, this.pos.y)) this.respawn(this.level.at(this.pos.x, this.pos.y) === "~" ? "The bridge vanished under you." : "The door closed on you.");
     } else if (m.t === "ping") {
+      if (m.danger) { this.showDanger(m.p); sfx.denied(); return; }
       this.showPing(m.p);
       this.coach.pinged = true;
       sfx.ping();
@@ -324,6 +328,16 @@ export class RunnerScene extends Phaser.Scene {
     this.tweens.add({ targets: ring, scale: 1.1, alpha: 0, duration: 750, repeat: 3 });
     this.tweens.add({ targets: dot, scale: 0.35, yoyo: true, repeat: 5, duration: 250 });
     this.time.delayedCall(3000, () => { ring.destroy(); dot.destroy(); });
+  }
+
+  /** The guide's warning: something dangerous here, don't walk in. */
+  private showDanger(p: Vec) {
+    const x = p.x * TILE + TILE / 2, y = p.y * TILE + TILE / 2;
+    const ring = this.add.image(x, y, "ping").setDepth(30).setScale(0.5).setTint(0xff4d5e);
+    const mark = this.add.text(x, y, "!", { fontFamily: "ui-monospace, Menlo, monospace", fontSize: "26px", fontStyle: "bold", color: "#ff4d5e", stroke: "#0b1020", strokeThickness: 5 }).setOrigin(0.5).setDepth(31);
+    this.tweens.add({ targets: ring, scale: 0.8, alpha: 0.4, duration: 260, yoyo: true, repeat: 5 });
+    this.time.delayedCall(3000, () => { ring.destroy(); mark.destroy(); });
+    this.hud.toast("Danger! Your Guide warns you off that spot.", 1800);
   }
 
   /** Next step toward a tapped tile: BFS over what the runner can currently walk on. */
@@ -382,15 +396,16 @@ export class RunnerScene extends Phaser.Scene {
     }
 
     const at = (p: Vec) => this.field[p.y * this.level.w + p.x];
+    this.coach.bridgeOpen ||= this.level.gates.some((g) => g.kind === "bridge" && reveals(at(g), g.color));
     this.tutor.update({
       level: this.level, runner: this.pos, ...this.coach, lampsOn: this.lightsOn.size, powered: this.powered.size, seen: true,
-      bridgeOpen: this.level.gates.some((g) => g.kind === "bridge" && reveals(at(g), g.color)),
       filterInView: this.level.filters.find((f) => at(f) && f.color !== this.lantern) ?? null,
       unseenDrone: null,
       visible: (p) => at(p) !== 0,
     });
 
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
+    if (this.exitOpen) glow.push(this.exitGlow);
     const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn, this.lantern);
     lit[0].radius = LANTERN_RADIUS;
     this.lightLayer!.draw(lit, glow);

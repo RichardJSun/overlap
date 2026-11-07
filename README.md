@@ -12,7 +12,7 @@ A two-player co-op puzzle game about a city in blackout, made for WolfJam 2026 (
 
 One player is the **Runner**. They walk the dark streets carrying a lantern and see only what light reaches. Outside the light there is nothing at all. The other player is the **Guide**, in the utility control room. The Guide sees the city map and its security drones, but sees the Runner only **on camera**: the streetlights are the control room's cameras, so the Guide sees the Runner only under a lit streetlight or inside a block that is back on the grid. The Guide drops pings and switches colored streetlights on and off within a power budget. The Runner can **flare** to show the Guide where they are.
 
-Light colors add. Some bridges and doors exist only under a specific mixed color, and some drones show up only under theirs. Colored glass **filters** on the street change the Runner's lantern color, so both players choose colors. Neither player can see the solution alone, so the puzzles happen where the two players' lights overlap.
+Light colors add. A colored bridge or door exists only while all of its colors are in the light on it: a magenta bridge needs red and blue (extra colors don't hurt). Drones show up only under their own color. Colored glass **filters** on the street change the Runner's lantern color, so both players choose colors. Neither player can see the solution alone, so the puzzles happen where the two players' lights overlap.
 
 | Mix | Makes | Used for |
 |---|---|---|

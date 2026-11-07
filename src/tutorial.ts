@@ -12,7 +12,7 @@ export type TutorCtx = {
   pinged: boolean; // guide sent / runner received a ping
   lampsOn: number;
   powered: number;
-  bridgeOpen: boolean;
+  bridgeOpen: boolean; // sticky: a bridge has been revealed at least once this district
   seen: boolean; // guide: runner on camera
   filterInView: Vec | null;
   unseenDrone: Vec | null;
@@ -22,7 +22,6 @@ export type TutorCtx = {
 
 type Step = { text: string; target?: (c: TutorCtx) => Vec | undefined; done: (c: TutorCtx) => boolean; when?: (c: TutorCtx) => boolean };
 
-const near = (a: Vec, b: Vec, r: number) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= r;
 const bridge = (c: TutorCtx) => c.level.gates.find((g) => g.kind === "bridge");
 const sub = (c: TutorCtx) => c.level.substations[0];
 
@@ -32,7 +31,7 @@ const TUTORIAL: Record<Role, Step[]> = {
     { text: "Walk with the arrow keys or WASD, or tap a tile. You only see what your lantern lights.", target: (c) => c.runner, done: (c) => c.moved >= 4 },
     { text: "Your Guide sees the whole city, but sees you only under a lit streetlight. Press Space (or tap yourself) to flare and show them where you are.", target: (c) => c.runner, done: (c) => c.flared },
     { text: "Talk to your Guide. Their pings show up even in the dark: head where they point.", done: (c) => c.pinged || c.moved >= 14 },
-    { text: "A bridge crosses the canal here, but only in magenta light. Red lantern + blue streetlight = magenta. Ask for blue!", target: (c) => bridge(c), when: (c) => !!bridge(c) && near(c.runner, bridge(c)!, 4), done: (c) => c.bridgeOpen || c.powered > 0 },
+    { text: "A bridge crosses the canal, but only in magenta light. Red lantern + blue streetlight = magenta. Walk to the canal and ask your Guide for blue!", target: (c) => bridge(c), done: (c) => c.bridgeOpen || c.powered > 0 },
     { text: "Cross, then find the substation ⚡. You can't see it, but your Guide can: follow their pings.", target: (c) => sub(c), done: (c) => c.powered > 0 },
     { text: "The block is back on and the exit is lit. Ask your Guide the way, then go!", target: (c) => c.level.exit, done: () => false },
   ],
@@ -51,7 +50,7 @@ const HINTS: Record<Role, Step[]> = {
     { text: "Colored glass! Walk over a filter to change your lantern's color. Your Guide has to plan around it.", target: (c) => c.filterInView ?? undefined, when: (c) => !!c.filterInView, done: () => false },
   ],
   guide: [
-    { text: "Amber ring: a drone the Runner can't see. Light it in its own color, or ping a warning.", target: (c) => c.unseenDrone ?? undefined, when: (c) => !!c.unseenDrone, done: () => false },
+    { text: "Amber ring: a drone the Runner can't see. Light it in its own color, or right-click (hold on a phone) to send a danger ping.", target: (c) => c.unseenDrone ?? undefined, when: (c) => !!c.unseenDrone, done: () => false },
   ],
 };
 const HINT_MS = 7000;
