@@ -270,7 +270,7 @@ export class GuideScene extends Phaser.Scene {
     // The coach only knows what the guide knows: where the runner was last seen.
     this.tutor.update({
       level: this.level, runner: this.lastSeenPos, moved: 0, ...this.coach, lampsOn: this.lightsOn.size, powered: this.powered.size,
-      seen: this.seen, bridgeOpen: false, filterInView: null, unseenDrone: warned ? warned.tile : null,
+      seen: this.seen, bridgeOpen: false, filterInView: null, unseenDrone: warned ? warned.tile : null, visible: () => true,
     });
     if (!this.seen) this.ghostLabel.setText(`last seen ${Math.round((time - this.lastSeenAt) / 1000)}s ago`);
   }

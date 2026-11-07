@@ -119,7 +119,7 @@ export function showTitle(root: HTMLElement, start: Start): void {
 
   const actions = el("section", { className: "ov-actions" },
     el("p", { className: "ov-pitch", textContent: "A city in blackout. One of you walks the dark with a lantern. The other runs the grid from the control room." }),
-    el("div", { className: "ov-run" }, runnerBtn, el("p", { className: "ov-help", textContent: "Opens a room. Your Guide joins from a phone." })),
+    el("div", { className: "ov-run" }, runnerBtn, el("p", { className: "ov-help", textContent: "Opens a room. Your Guide joins from a second computer, a phone, or another tab." })),
     form,
     el("a", { className: "ov-local", href: "?local=1", textContent: "Try it solo: both roles on one screen" }),
   );
@@ -188,16 +188,23 @@ export function showTitle(root: HTMLElement, start: Start): void {
       if (connected) setTimeout(begin, 600);
     });
 
+    // Two computers is the best way to play, so the link gets a one-click copy; the QR code is for phones.
+    const copy = el("button", { className: "ov-btn ov-copy", type: "button", textContent: "Copy link" });
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(link); copy.textContent = "Copied. Send it to your Guide"; }
+      catch { copy.textContent = "Select the link above and copy it"; }
+    });
     wrap.classList.add("lobby");
     body.replaceChildren(
       el("section", { className: "ov-room" },
         tape("Room code"),
         codeEl,
         status,
-        el("p", { className: "ov-hint" }, "On the Guide's phone, scan the code or open ", el("span", { className: "ov-link", textContent: link })),
+        el("p", { className: "ov-hint" }, "On the Guide's computer, open this link, or type the code under Join as Guide:", el("span", { className: "ov-link", textContent: link })),
+        copy,
         el("div", { className: "ov-run" }, startNow, el("p", { className: "ov-help", textContent: "Your Guide can join mid-run." })),
       ),
-      el("figure", { className: "ov-plate" }, qr, el("figcaption", { textContent: "Scan to join as Guide" })),
+      el("figure", { className: "ov-plate" }, qr, el("figcaption", { textContent: "On a phone? Scan to join as Guide" })),
     );
     startNow.focus({ preventScroll: true });
   });
@@ -294,6 +301,7 @@ const CSS = `
 @media (prefers-reduced-motion: no-preference) { .ov-status:not(.ok)::before { animation: ov-breathe 1.2s ease-in-out infinite alternate; } }
 @keyframes ov-breathe { to { opacity: .25; } }
 .ov-hint { margin: 0; color: var(--dim); font-size: 14px; }
+.ov-copy { align-self: flex-start; min-height: 44px; padding: 0 16px; font-size: 15px; }
 .ov-link { display: block; margin-top: 4px; font: 500 13px/1.4 var(--mono); color: var(--ink); word-break: break-all; user-select: all; }
 .ov-plate { margin: 0; justify-self: start; display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 12px; background: var(--ink);
   box-shadow: 0 0 0 1px var(--edge), 0 24px 80px -24px rgba(255, 211, 138, .35); }
@@ -310,7 +318,7 @@ const CSS = `
   .ov-plate { justify-self: center; }
   .ov.lobby .ov-body { display: flex; flex-direction: column; gap: 20px; }
   .ov-room { display: contents; }
-  .ov-room > .ov-tape { order: 1; } .ov-code { order: 2; } .ov-plate { order: 3; align-self: flex-start; } .ov-status { order: 4; } .ov-hint { order: 5; } .ov-room > .ov-run { order: 6; }
+  .ov-room > .ov-tape { order: 1; } .ov-code { order: 2; } .ov-plate { order: 3; align-self: flex-start; } .ov-status { order: 4; } .ov-hint { order: 5; } .ov-copy { order: 5; } .ov-room > .ov-run { order: 6; }
   .ov-qr { width: min(200px, 56vw) !important; }
 }
 `;

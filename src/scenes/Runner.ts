@@ -387,6 +387,7 @@ export class RunnerScene extends Phaser.Scene {
       bridgeOpen: this.level.gates.some((g) => g.kind === "bridge" && reveals(at(g), g.color)),
       filterInView: this.level.filters.find((f) => at(f) && f.color !== this.lantern) ?? null,
       unseenDrone: null,
+      visible: (p) => at(p) !== 0,
     });
 
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);

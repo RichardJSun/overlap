@@ -27,8 +27,8 @@ Each substation the Runner reaches powers its block for good, moves the checkpoi
 
 ## How to play
 
-1. On a laptop, open the game and press **Play as Runner**. A 4-letter room code and a QR code appear.
-2. On a phone, scan the QR code, or open the game and type the code under **Join as Guide**.
+1. On one computer, open the game and press **Play as Runner**. A 4-letter room code appears.
+2. On a second computer, open the link (there's a **Copy link** button), or type the code under **Join as Guide**. Two computers play best. A phone works too: scan the QR code. So does a second browser tab.
 3. Talk to each other. That's the game.
 
 No second device? Open [`?local=1`](https://overlap.richardsun.workers.dev/?local=1) to get both roles side by side in one window.

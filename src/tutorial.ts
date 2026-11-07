@@ -16,6 +16,8 @@ export type TutorCtx = {
   seen: boolean; // guide: runner on camera
   filterInView: Vec | null;
   unseenDrone: Vec | null;
+  /** Whether this player can see tile p. The runner's pointer never marks a tile that's still dark. */
+  visible: (p: Vec) => boolean;
 };
 
 type Step = { text: string; target?: (c: TutorCtx) => Vec | undefined; done: (c: TutorCtx) => boolean; when?: (c: TutorCtx) => boolean };
@@ -31,8 +33,8 @@ const TUTORIAL: Record<Role, Step[]> = {
     { text: "Your Guide sees the whole city, but sees you only under a lit streetlight. Press Space (or tap yourself) to flare and show them where you are.", target: (c) => c.runner, done: (c) => c.flared },
     { text: "Talk to your Guide. Their pings show up even in the dark: head where they point.", done: (c) => c.pinged || c.moved >= 14 },
     { text: "A bridge crosses the canal here, but only in magenta light. Red lantern + blue streetlight = magenta. Ask for blue!", target: (c) => bridge(c), when: (c) => !!bridge(c) && near(c.runner, bridge(c)!, 4), done: (c) => c.bridgeOpen || c.powered > 0 },
-    { text: "Cross, then find the substation ⚡. Powering it restores the block.", target: (c) => sub(c), done: (c) => c.powered > 0 },
-    { text: "The block is back on and the exit is lit. Go!", target: (c) => c.level.exit, done: () => false },
+    { text: "Cross, then find the substation ⚡. You can't see it, but your Guide can: follow their pings.", target: (c) => sub(c), done: (c) => c.powered > 0 },
+    { text: "The block is back on and the exit is lit. Ask your Guide the way, then go!", target: (c) => c.level.exit, done: () => false },
   ],
   guide: [
     { text: "You run the grid. You see the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Ask them to flare.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
@@ -88,7 +90,8 @@ export class Tutor {
       }
       step = this.shown;
     }
-    const t = step?.target?.(c);
+    const t0 = step?.target?.(c);
+    const t = t0 && c.visible(t0) ? t0 : undefined;
     this.pointer.setVisible(!!t);
     if (t && (this.pointer.getData("tx") !== t.x || this.pointer.getData("ty") !== t.y)) {
       // Re-seat the bounce over the new target tile.

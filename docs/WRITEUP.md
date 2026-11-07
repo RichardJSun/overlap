@@ -3,7 +3,7 @@
 ## How to access
 
 - **Play:** https://overlap.richardsun.workers.dev
-- Two devices: on a laptop press **Play as Runner**, then scan the QR code with a phone (the Guide). Or type the 4-letter code under **Join as Guide**.
+- Two computers play best: one presses **Play as Runner** and sends the link (or the 4-letter code) to the other, who joins as the Guide. A phone can join by QR code, and a second browser tab works too.
 - One screen: https://overlap.richardsun.workers.dev/?local=1 shows both roles side by side.
 - Runner: arrows / WASD, or tap a tile; Space flares. Guide: tap a tile to ping, tap a streetlight to switch it.
 - District 1 is a tutorial that walks each player through their role.
