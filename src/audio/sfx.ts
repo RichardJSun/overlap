@@ -23,7 +23,7 @@ class Voice {
   private nodes: AudioNode[] = [];
   private last?: AudioScheduledSourceNode;
   end = 0;
-  constructor(readonly c: BaseAudioContext) {}
+  constructor(readonly c: BaseAudioContext, readonly t: number) {}
 
   add<T extends AudioNode>(n: T): T {
     this.nodes.push(n);
@@ -50,7 +50,7 @@ class Voice {
   filter(dest: AudioNode, type: BiquadFilterType, f: number, q = 0.7): BiquadFilterNode {
     const n = this.add(this.c.createBiquadFilter());
     n.type = type;
-    n.frequency.value = f;
+    n.frequency.setValueAtTime(f, this.t); // anchors later ramps at the sound's start, not at build time
     n.Q.value = q;
     n.connect(dest);
     return n;
@@ -58,7 +58,7 @@ class Voice {
   osc(dest: AudioNode, type: OscillatorType, f: number, t: number, stop: number, detune = 0): OscillatorNode {
     const o = this.add(this.c.createOscillator());
     o.type = type;
-    o.frequency.value = f;
+    o.frequency.setValueAtTime(f, t);
     o.detune.value = detune;
     o.connect(dest);
     return this.run(o, t, stop);
@@ -196,7 +196,7 @@ export const KINDS = Object.keys(SOUNDS) as Kind[];
 
 /** Schedules one sound into any context (live or offline). Returns when its last node stops. */
 export function play(c: BaseAudioContext, out: AudioNode, kind: Kind, t = c.currentTime): number {
-  const v = new Voice(c);
+  const v = new Voice(c, t);
   SOUNDS[kind](v, out, t);
   return v.done();
 }
