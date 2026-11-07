@@ -73,6 +73,10 @@ export class GuideScene extends Phaser.Scene {
     this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room, this.data_.local);
     this.events.once("shutdown", () => this.hud.destroy());
     this.tutor = new Tutor(this, this.hud, "guide");
+    this.hud.onSignal((e) => {
+      this.net.send({ t: "emote", e });
+      this.hud.toast(`Signal sent: ${{ wait: "wait", go: "go", flare: "flare, please" }[e]}.`, 1200);
+    });
     // Transports keep every listener, so these go quiet once the scene stops.
     const alive = { on: true };
     this.events.once("shutdown", () => (alive.on = false));
@@ -95,7 +99,7 @@ export class GuideScene extends Phaser.Scene {
     this.loadDistrict(0);
   }
 
-  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, ...bands(this.level, this.scale.width, this.scale.height, HUD_BOTTOM)); }
+  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, ...bands(this.level, this.scale.width, this.scale.height, this.hud.bottomHeight() || HUD_BOTTOM)); }
 
   private get budget() { return budgetFor(this.level, this.powered.size); }
 

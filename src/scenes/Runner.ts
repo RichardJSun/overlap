@@ -12,7 +12,7 @@ import { makeTextures } from "../render/textures.ts";
 import { NAMES, reveals, type ColorMask } from "../shared/color.ts";
 import { dronePos, droneVisible, lanternRadius, passable, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
-import type { Msg, Vec } from "../shared/protocol.ts";
+import { EMOTES, type Emote, type Msg, type Vec } from "../shared/protocol.ts";
 import { bands, fitCamera } from "./fit.ts";
 
 const STEP_MS = 120;
@@ -47,6 +47,7 @@ export class RunnerScene extends Phaser.Scene {
   private t0 = 0;
   private runStart = -1; // set on the first frame: a scene's clock reads stale inside create()
   private caught = 0;
+  private emoteText?: Phaser.GameObjects.Text;
   private invulnUntil = 0;
   private lastFlare = -Infinity;
   private transitioning = false;
@@ -321,6 +322,8 @@ export class RunnerScene extends Phaser.Scene {
       if (m.on) sfx.lightOn(); else sfx.lightOff();
       // Standing on a bridge or door that just lost its light.
       if (!this.canEnter(this.pos.x, this.pos.y)) this.respawn(this.level.at(this.pos.x, this.pos.y) === "~" ? "The bridge vanished under you." : "The door closed on you.");
+    } else if (m.t === "emote") {
+      if (EMOTES.includes(m.e)) this.showEmote(m.e);
     } else if (m.t === "ping") {
       if (m.danger) { this.showDanger(m.p); sfx.denied(); return; }
       this.showPing(m.p);
@@ -336,6 +339,21 @@ export class RunnerScene extends Phaser.Scene {
     this.tweens.add({ targets: ring, scale: 1.1, alpha: 0, duration: 750, repeat: 3 });
     this.tweens.add({ targets: dot, scale: 0.35, yoyo: true, repeat: 5, duration: 250 });
     this.time.delayedCall(3000, () => { ring.destroy(); dot.destroy(); });
+  }
+
+  /** The Guide's quick signal, a callout over the Runner's head that reads in the dark and fades in two seconds. */
+  private showEmote(e: Emote) {
+    this.emoteText?.destroy();
+    const words: Record<Emote, string> = { wait: "WAIT", go: "GO", flare: "FLARE?" };
+    const t = this.add.text(this.runner.x, this.runner.y - 22, words[e], {
+      fontFamily: '"DIN Condensed", Bahnschrift, "Roboto Condensed", "Arial Narrow", sans-serif', fontSize: "24px", fontStyle: "bold",
+      color: "#ffd38a", stroke: "#0b1020", strokeThickness: 6,
+    }).setOrigin(0.5, 1).setDepth(60).setResolution(2);
+    this.emoteText = t;
+    this.tweens.add({ targets: t, y: t.y - 10, duration: 260, ease: "Quad.easeOut" });
+    this.tweens.add({ targets: t, alpha: 0, delay: 1800, duration: 400, onComplete: () => t.destroy() });
+    sfx.ping();
+    if (e === "flare") this.hud.toast("Your Guide can't see you. Press Space (or tap yourself) to flare.", 2400);
   }
 
   /** The guide's warning: something dangerous here, don't walk in. */

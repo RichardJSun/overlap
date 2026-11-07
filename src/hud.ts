@@ -1,10 +1,10 @@
 import { sfx } from "./audio/sfx.ts";
 import type { NetStatus } from "./net/transport.ts";
-import type { Role } from "./shared/protocol.ts";
+import type { Emote, Role } from "./shared/protocol.ts";
 
 // Heights are load-bearing: src/scenes/fit.ts reserves 44px on top and the Guide reserves 44px below.
 const CSS = `
-.hud{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--street:#141a2e;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;
+.hud{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--street:#141a2e;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;--line:rgba(232,236,255,.45);
   --din:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--ease:cubic-bezier(.23,1,.32,1);--lift:0 0 2px #0b1020,0 1px 10px #0b1020,0 0 18px rgba(11,16,32,.9);
   position:absolute;inset:0;pointer-events:none;container-type:inline-size;font:13.5px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
@@ -82,6 +82,19 @@ const CSS = `
 .hud .meter i{display:block;height:100%;background:var(--ink);transform-origin:left;transition:transform .16s var(--ease)}
 .hud .ping.charging .k{color:var(--faint)}
 .hud .ping.charging .meter i{background:var(--faint)}
+.hud .sig{flex-direction:row;align-items:stretch;padding:0;gap:0}
+.hud .sig button{pointer-events:auto;min-width:48px;padding:2px 12px 0;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink);
+  font:700 14px/1 var(--din);font-stretch:condensed;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  transition:background-color .15s,color .15s,transform .12s var(--ease)}
+.hud .sig button:first-child{border-left:0}
+.hud .sig button:active{transform:scale(.95)}
+.hud .sig button:focus-visible{outline:2px solid var(--amber);outline-offset:-3px}
+.hud .sig button.sent{background:var(--amber);color:var(--night)}
+@media (hover:hover){.hud .sig button:hover{background:rgba(255,211,138,.14)}}
+@container (max-width:559px){.hud .bottom{height:auto}.hud .bottom .tb{flex-wrap:wrap}
+  .hud .bottom .goal{flex:1 0 100%;min-height:36px;box-shadow:inset 0 -1px 0 var(--line)}
+  .hud .bottom .cell{min-height:44px}.hud .bottom .cell:nth-child(2){border-left:0}
+  .hud .sig{flex:1}.hud .sig button{flex:1}.hud.guide .toast{bottom:100px}}
 .hud .bolt{display:inline-block;width:.62em;height:.9em;margin:0 .1em;vertical-align:-.1em;background:var(--amber);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat}
@@ -118,7 +131,7 @@ export class Hud {
       <svg class="lead off" aria-hidden="true"><defs><marker id="hud-arrow-${role}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" fill="#ffd38a" stroke="none"/></marker></defs><path class="ld" marker-end="url(#hud-arrow-${role})"/><circle r="13"/></svg>
       <div class="toast" role="status"></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
       ${role === "guide"
-        ? `<div class="bottom"><div class="tb"><div class="cell goal objective"><span class="k">Goal</span><span class="obj"></span></div><div class="cell"><span class="k">Lights</span><span class="v"><span class="bars"></span><span class="count"></span></span></div><div class="cell ping"><span class="k">Ping</span><span class="meter"><i></i></span></div><div class="cell"><span class="k">Time</span><span class="clock"></span></div></div></div>`
+        ? `<div class="bottom"><div class="tb"><div class="cell goal objective"><span class="k">Goal</span><span class="obj"></span></div><div class="cell"><span class="k">Lights</span><span class="v"><span class="bars"></span><span class="count"></span></span></div><div class="cell ping"><span class="k">Ping</span><span class="meter"><i></i></span></div><div class="cell sig" role="group" aria-label="Signal the Runner"><button type="button" data-e="wait">Wait</button><button type="button" data-e="go">Go</button><button type="button" data-e="flare">Flare?</button></div><div class="cell"><span class="k">Time</span><span class="clock"></span></div></div></div>`
         : `<div class="objective tb"><div class="cell"><span class="k">Goal</span><span class="obj"></span></div></div>`}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
@@ -228,6 +241,21 @@ export class Hud {
     el.classList.add("show");
     window.setTimeout(() => el.classList.remove("show"), ms);
   }
+
+  /** Wires the Guide's signal buttons. */
+  onSignal(cb: (e: Emote) => void) {
+    this.el.querySelectorAll<HTMLButtonElement>(".sig button").forEach((b) => {
+      b.onclick = () => {
+        sfx.unlock();
+        b.classList.add("sent");
+        window.setTimeout(() => b.classList.remove("sent"), 240);
+        cb(b.dataset.e as Emote);
+      };
+    });
+  }
+
+  /** Height of the Guide's console, which grows to two rows on narrow screens. */
+  bottomHeight() { return (this.el.querySelector(".bottom") as HTMLElement | null)?.offsetHeight ?? 0; }
 
   clock(text: string) { const el = this.q(".clock"); if (el) el.textContent = text; }
   destroy() { this.el.remove(); }

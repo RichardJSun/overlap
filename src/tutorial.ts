@@ -36,11 +36,11 @@ const TUTORIAL: Record<Role, Step[]> = {
     { text: "The block is back on and the exit is lit. Ask your Guide the way, then go!", target: (c) => c.level.exit, done: () => false },
   ],
   guide: [
-    { text: "You run the grid. You can see the city and its drones, but you only see the Runner under a lit streetlight or in a powered block. Ask them to flare.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
+    { text: "You run the grid. You can see the city and its drones, but you only see the Runner under a lit streetlight or in a powered block. Ask them to flare, or press Flare? on your console.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
     { text: "Tap any tile to ping it. The Runner sees pings even in the dark. Ping the bridge over the canal.", target: (c) => bridge(c), done: (c) => c.pinged },
     { text: "Tap the blue streetlight to switch it on. Blue + the Runner's red lantern = magenta, and the bridge appears.", target: (c) => c.level.lights[0], done: (c) => c.lampsOn > 0 },
-    { text: "The streetlight is a camera too: you'll see the Runner when they're in its light. Guide them to the substation ⚡.", target: (c) => sub(c), done: (c) => c.powered > 0 },
-    { text: "Each substation gives you more power. Now talk them to the exit.", target: (c) => c.level.exit, done: () => false },
+    { text: "The streetlight is a camera too, so you'll see the Runner when they're in its light. Guide them to the substation ⚡.", target: (c) => sub(c), done: (c) => c.powered > 0 },
+    { text: "Each substation gives you more power. Now talk them to the exit. Wait and Go on your console show up over the Runner's head.", target: (c) => c.level.exit, done: () => false },
   ],
 };
 
