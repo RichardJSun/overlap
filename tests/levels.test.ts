@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reveals } from "../src/shared/color.ts";
-import { loadLevel, solve, type Level } from "../src/shared/level.ts";
+import { loadLevel, solve, validateLevel, type Level } from "../src/shared/level.ts";
 import { LEVELS } from "../src/levels/index.ts";
 
 /** Tiles a drone visits along each axis-aligned leg of its loop, endpoints included. */
@@ -44,11 +44,14 @@ describe("district data", () => {
       for (const dr of level.drones) for (const t of legTiles(dr.path)) expect(level.at(t.x, t.y), `${dr.id} at ${t.x},${t.y}`).not.toBe("#");
     });
 
-    it(`${name} drones can each be exposed by some streetlight`, () => {
+    it(`${name} drones each fly under a streetlight camera, and some light can show their color`, () => {
+      const lanterns = [level.lantern, ...level.filters.map((f) => f.color)];
       for (const dr of level.drones) {
         const tiles = legTiles(dr.path);
-        const exposed = level.lights.some((l) => reveals(l.color, dr.color) && tiles.some((t) => level.lightFields.get(l.id)![t.y * level.w + t.x]));
-        expect(exposed, dr.id).toBe(true);
+        const cams = level.lights.filter((l) => tiles.some((t) => level.lightFields.get(l.id)![t.y * level.w + t.x]));
+        expect(cams.length, `${dr.id} camera`).toBeGreaterThan(0);
+        // A drone in a Runner color shows only in the Runner's own glass; the Guide can only ping it.
+        expect(cams.some((l) => reveals(l.color, dr.color)) || lanterns.some((c) => reveals(c, dr.color)), `${dr.id} color`).toBe(true);
       }
     });
 
@@ -62,6 +65,15 @@ describe("district data", () => {
         expect(n === -1 || n > solve(level), `solved in ${n} without it`).toBe(true);
       });
     });
+  });
+
+  it("validator rejects a streetlight that shares a color with the Runner's lantern or glass", () => {
+    const d1 = LEVELS[0];
+    const red = { ...d1, lights: [...d1.lights, { id: "L2", x: 2, y: 1, color: 4, radius: 3 }] };
+    expect(validateLevel(red).join()).toMatch(/streetlight L2 is red.*the glass must give colors the city lacks/);
+    const blueGlass = { ...d1, filters: [{ x: 3, y: 1, color: 1 }] };
+    expect(validateLevel(blueGlass).join()).toMatch(/streetlight L1 is blue/);
+    expect(validateLevel(d1)).toEqual([]);
   });
 
   it("district 3 needs both lights on at once for the cyan bridge", () => {
