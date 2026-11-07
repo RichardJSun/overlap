@@ -52,3 +52,25 @@ Design calls from Richard: the Guide sees the Runner only "on camera", inside a 
 - `onCamera()` is a pure function next to the solver. The lantern doesn't count, by design.
 - Protocol: `Snapshot.lantern`, `{t:"lantern", c}` when the Runner picks up a filter, and `{t:"flare", p}`.
 - The tag `submittable-v1` marks the live build from before these changes, in case they don't land.
+
+## 13:55 Fresh-eyes playtest, then three design changes
+A subagent that wrote none of the code played every district headless and reported back. What it found and what we did:
+- **District 3's obvious route was a drone trap.** Each catch sent the Runner back across the canal, so the Guide had to rebuild a two-light bridge. Districts 2 and 3 are being redesigned with checkpoints after expensive setups, alternate lanes at drone crossings, and a streetlight camera over each one.
+- **Bumping an unlit bridge said nothing.** Now the Runner hears "A bridge is here, but it only exists in magenta light." Doors say the same, and the dark exit already did.
+- **The Guide never heard about catches.** The Guide now gets a toast when the Runner is sent back.
+- **The solo path was a small text link.** It is now a full-width button.
+- **No beat between districts.** A "District restored" card now shows before the next district loads.
+- **Phone streetlights were too small to hit.** A touch now snaps to a streetlight within a tile and a half.
+- **"Lamp" vs "streetlight".** It's "streetlight" everywhere now.
+- **The ending had no stats.** The credits now show run time and catches (new optional fields on the `ending` message).
+- A "full game reset" it saw once was a Vite hot reload, caused by the main session editing `main.ts` mid-playtest. Lesson: never edit `src/` while an agent is driving the HMR dev server. Recordings and autoplay now run against a frozen `vite preview` build.
+
+Richard's design calls, all built:
+- **The Guide sees the Runner only on camera.** Streetlights are the control room's cameras. Off camera, the Guide gets a "last seen Ns ago" ghost, and the Runner's lantern pool is hidden too, since it would give the position away. Switching a streetlight on now does two jobs: it mixes color for the Runner and lets the Guide watch them. **Space** (or tapping yourself) flares the lantern so the Guide's cameras catch the Runner for 2.5 s.
+- **Darkness is pitch black.** There are no faint outlines outside light, and roofs stay black even inside a light pool. Only streets and street-facing walls catch light, so buildings read as silhouettes. Wall-mounted streetlights are excluded so they still show.
+- **Lantern filters.** Colored glass on the street recolors the lantern. The solver searches lantern color too.
+- **District 1 is a tutorial.** Numbered coach steps per role and a bobbing pointer over the tile that matters: walk, flare, listen for pings, and the magenta bridge for the Runner; cameras, ping, the blue streetlight, and the substation for the Guide. Later districts show a one-off tip the first time a filter or an unseen drone comes up. The Guide's coach only knows the last-seen position, so the tutorial can't leak where the Runner is.
+
+Mistake of the hour: a scratch worktree's `node_modules` was a symlink, which the `node_modules/` (directories only) ignore rule missed. It got committed, and the merge replaced the real folder with a link to itself. Fixed, and the rule is now `node_modules`.
+
+![Tutorial, both roles](shots/tut-flared.png)

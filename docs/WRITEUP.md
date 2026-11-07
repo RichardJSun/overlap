@@ -5,18 +5,19 @@
 - **Play:** https://overlap.richardsun.workers.dev
 - Two devices: on a laptop press **Play as Runner**, then scan the QR code with a phone (the Guide). Or type the 4-letter code under **Join as Guide**.
 - One screen: https://overlap.richardsun.workers.dev/?local=1 shows both roles side by side.
-- Runner: arrows / WASD, or tap a tile. Guide: tap a tile to ping, tap a streetlight to switch it.
+- Runner: arrows / WASD, or tap a tile; Space flares. Guide: tap a tile to ping, tap a streetlight to switch it.
+- District 1 is a tutorial that walks each player through their role.
 - Source: https://github.com/My-Name-Is-Jeff/overlap
 
 ## Inspiration
 
-We wanted a co-op game where "visibility" is the whole mechanic, not a fog-of-war setting. One player can see everything but can't move. The other can move but sees almost nothing. The only way through is to combine what both of you can see.
+We wanted a co-op game where "visibility" is the whole mechanic, not a fog-of-war setting. One player can move but sees almost nothing. The other sees the city but can't move, and can see their partner only through the same light. The only way through is to combine what both of you can see.
 
 ## What it does
 
-A city is in a blackout. The **Runner** walks the dark streets with a red lantern. The **Guide**, in the utility control room, sees the whole map, drops pings, and switches colored streetlights on and off within a power budget.
+A city is in a blackout. The **Runner** walks pitch-black streets with a lantern. The **Guide**, in the utility control room, sees the map and the security drones, drops pings, and switches colored streetlights on and off within a power budget. The streetlights are also the control room's cameras: the Guide sees the Runner only under a lit streetlight or in a powered block, so the Runner flares their lantern to say "I'm here".
 
-Light colors add. Red lantern + blue streetlight makes magenta, and some canal bridges exist only in magenta light. Red + green makes yellow, which opens locked doors. In the last district, green + blue streetlights make cyan for a bridge the lantern can't help with. Green security drones are invisible in red light, so the Guide has to warn the Runner with pings or flood the street with green.
+Light colors add. Red lantern + blue streetlight makes magenta, and some canal bridges exist only in magenta light. Red + green makes yellow, which opens locked doors. In the last district, green + blue streetlights make cyan for a bridge the lantern can't help with. Green security drones are invisible in red light, so the Guide has to warn the Runner with pings or flood the street with green. Colored glass filters on the street change the lantern's color, so the Runner picks colors too, and the Guide plans around them.
 
 Each substation the Runner reaches powers its block for good, moves the checkpoint, and gives the Guide more power. When the third district is lit, both screens show the same view for the first time.
 
@@ -42,6 +43,10 @@ Every color has a shape too (red triangle, green circle, blue square), so the ga
 - Every district is machine-checked to need both players.
 - No asset files at all.
 
+## Playtesting
+
+A fresh agent that wrote none of the code played every district and reported what was broken or confusing. That led to feedback when you bump an unlit bridge, catch notices for the Guide, a real "solo" button, district-cleared cards, bigger touch targets for streetlights, and a redesigned finale.
+
 ## What we learned
 
 Designing around information asymmetry is mostly about what each player *can't* see. The best moments came from the Guide realizing the Runner can't see the drone they're looking at.
@@ -49,5 +54,4 @@ Designing around information asymmetry is mostly about what each player *can't* 
 ## What's next
 
 - A bonus "substation repair" district where the Guide fixes a broken logic rule.
-- Lantern filters, so the Runner chooses colors too.
 - A spectator view for showcases, and more districts.
