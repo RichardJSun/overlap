@@ -88,13 +88,14 @@ export class IntroScene extends Phaser.Scene {
     }));
     const dark = 4400 + order.length * 120 + 200;
     this.time.delayedCall(dark, () => {
+      this.staticBurst(900);
       state.windows = false;
       level.substations.forEach((s) => map.setPowered(s.id, false));
       map.setExitOpen(false);
       this.tweens.add({ targets: state, amb: 0, duration: 900, ease: "Quad.easeIn" });
     });
     // 3. Blackout, then play.
-    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "One field tech is out there with a lantern. Dispatch has the map and the streetlights.", true));
+    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "21:00 · Every camera in the district is down. The streetlights still see, so use them to get the field tech through.", true));
     this.time.delayedCall(dark + 3600, () => this.finish());
 
     const skip = () => { sfx.unlock(); this.finish(); };
@@ -123,6 +124,32 @@ export class IntroScene extends Phaser.Scene {
       : `display:inline-block;padding:3px 8px 1px;background:#1b2238;font:700 14px/1.2 ${din};letter-spacing:.14em;text-transform:uppercase;color:#ffd38a`;
     body.style.cssText = big ? "margin-top:12px;font:16px/1.4 system-ui,sans-serif;color:#a9b1d6" : "margin-top:10px;font:500 clamp(16px,1.6vw,20px)/1.4 system-ui,sans-serif";
     this.text.replaceChildren(top, body);
+  }
+
+  /** The camera feeds die: a burst of analog static over the whole pane, fading out. */
+  private staticBurst(ms: number) {
+    const pane = this.game.canvas.parentElement!;
+    const c = document.createElement("canvas");
+    c.width = 160; c.height = 100;
+    c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;mix-blend-mode:screen";
+    pane.appendChild(c);
+    const g = c.getContext("2d")!, img = g.createImageData(c.width, c.height), t0 = performance.now();
+    const frame = () => {
+      const k = (performance.now() - t0) / ms;
+      if (k >= 1 || this.done) { c.remove(); return; }
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.random() * 255 * (Math.random() < 0.08 ? 1 : 0.55);
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+        img.data[i + 3] = 255 * (1 - k) * 0.85;
+      }
+      // A rolling bright band, like a monitor losing sync.
+      const band = Math.floor(((performance.now() - t0) / 3) % c.height);
+      for (let x = 0; x < c.width; x++) for (let y = band; y < Math.min(c.height, band + 6); y++) img.data[(y * c.width + x) * 4 + 3] = 255 * (1 - k);
+      g.putImageData(img, 0, 0);
+      requestAnimationFrame(frame);
+    };
+    frame();
+    sfx.radio();
   }
 
   private finish() {

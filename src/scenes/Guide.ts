@@ -53,6 +53,8 @@ export class GuideScene extends Phaser.Scene {
   private ghostLabel!: Phaser.GameObjects.Text;
   private trail: Phaser.GameObjects.Arc[] = [];
   private exitGlow = { x: 0, y: 0, w: 3, h: 3 };
+  private monitor?: Phaser.GameObjects.TileSprite;
+  private camTags = new Map<string, Phaser.GameObjects.Text>();
   private drones = new Map<string, { img: Phaser.GameObjects.Image; warn: Phaser.GameObjects.Image; color: number; tile: Vec }>();
 
   constructor() { super("guide"); }
@@ -62,6 +64,12 @@ export class GuideScene extends Phaser.Scene {
   create() {
     makeTextures(this);
     addPost(this, "guide");
+    if (!this.textures.exists("static")) {
+      const t = this.textures.createCanvas("static", 64, 64)!, g = t.getContext(), img = g.createImageData(64, 64);
+      for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+      g.putImageData(img, 0, 0);
+      t.refresh();
+    }
     this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room, this.data_.local);
     this.events.once("shutdown", () => this.hud.destroy());
     this.tutor = new Tutor(this, this.hud, "guide");
@@ -103,6 +111,11 @@ export class GuideScene extends Phaser.Scene {
     this.map = new MapView(this, this.level, { glyphs: true }).setDepth(0);
     this.map.base.setAlpha(0.92);
     for (const f of this.level.filters) this.map.base.add(this.add.image(f.x * TILE + TILE / 2, f.y * TILE + TILE / 2, `filter-${f.color}`));
+    // The guide watches a wall of monitors: faint live static over the map, and a CAM tag on every lit streetlight.
+    this.monitor?.destroy();
+    this.monitor = this.add.tileSprite(0, 0, this.level.w * TILE, this.level.h * TILE, "static").setOrigin(0).setAlpha(0.07).setBlendMode(Phaser.BlendModes.ADD).setDepth(6);
+    this.camTags.forEach((t) => t.destroy());
+    this.camTags = new Map(this.level.lights.map((l, i) => [l.id, this.add.text(l.x * TILE + TILE / 2, l.y * TILE - 2, `CAM ${i + 1}`, { fontFamily: "ui-monospace, Menlo, monospace", fontSize: "11px", color: "#4dff88", stroke: "#0b1020", strokeThickness: 3 }).setOrigin(0.5, 1).setDepth(17).setResolution(2).setVisible(false)]));
     this.lightLayer = new LightLayer(this, this.level, 0x000000, 0).setDepth(10);
     this.lightLayer.rt.setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.45);
     for (const d of this.level.drones) {
@@ -139,7 +152,9 @@ export class GuideScene extends Phaser.Scene {
     const gx = this.lastSeenPos.x * TILE + TILE / 2, gy = this.lastSeenPos.y * TILE + TILE / 2;
     const ghost = !seen && (this.peer || !!this.data_.local);
     this.ghost.setVisible(ghost).setPosition(gx, gy);
-    this.ghostLabel.setVisible(ghost).setPosition(gx, gy);
+    // Keep the label on the map near the left and right edges.
+    const ox = this.lastSeenPos.x < 4 ? 0.1 : this.lastSeenPos.x > this.level.w - 5 ? 0.9 : 0.5;
+    this.ghostLabel.setVisible(ghost).setPosition(gx, gy).setOrigin(ox, -1.1);
     // The lantern's own pool would give the runner away, so it shows only while they're on camera.
     const lit = sources(this.level, this.runnerPos, this.lightsOn, this.lantern);
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
@@ -148,6 +163,7 @@ export class GuideScene extends Phaser.Scene {
     const field = lightField(this.level, lit);
     for (const d of this.drones.values()) d.warn.setVisible(seen && !droneVisible(field[d.tile.y * this.level.w + d.tile.x], d.color));
     this.hud.budget(this.lightsOn.size, this.budget);
+    for (const [id, tag] of this.camTags) tag.setVisible(this.lightsOn.has(id));
     const left = this.level.substations.length - this.powered.size;
     this.hud.objective(`${left ? `Substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Exit open"} · lantern ${NAMES[this.lantern]}`, !left);
   }
@@ -277,6 +293,7 @@ export class GuideScene extends Phaser.Scene {
     const s = this.clockStart === null ? -1 : Math.floor((time - this.clockStart) / 1000);
     this.hud.clock(s < 0 ? "--:--" : `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`);
     this.input.setDefaultCursor(time - this.lastPing >= PING_COOLDOWN ? "crosshair" : "wait");
+    this.monitor?.setTilePosition(Math.random() * 64, Math.random() * 64);
     if (!this.level) return;
     // A flare runs out, or the guide just switched the camera that was watching the runner.
     if (this.onCam !== this.seen) this.redraw();
