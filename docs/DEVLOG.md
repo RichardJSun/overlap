@@ -83,7 +83,7 @@ Mistake of the hour: a scratch worktree's `node_modules` was a symlink, which th
 
 ![Network check, Guide on a phone](shots/net-guide-phone.png)
 
-## 14:40 Second playtest, and a quieter HUD
+## 14:35 Second playtest, and a quieter HUD
 A second fresh agent played the live build: the tutorial, filters, cameras, and the phone Guide. Fixes:
 - **The tutorial skipped the color lesson, then went blank twice.** The bridge step waited until the Runner was near the bridge, by which time the Guide had already lit it. After crossing, the step "undid" itself as the bridge went dark behind them. Now the step shows right after the ping, and "the bridge has opened" sticks once it happens.
 - **"Power 1/2" read as substations.** It's now **Lights**.
