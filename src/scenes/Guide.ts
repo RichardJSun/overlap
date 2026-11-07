@@ -117,6 +117,7 @@ export class GuideScene extends Phaser.Scene {
     const tile = { x: Math.floor(fx), y: Math.floor(fy) };
     if (this.time.now - this.lastPing < PING_COOLDOWN) { this.hud.toast("Ping recharging…", 900); return; }
     this.lastPing = this.time.now;
+    this.hud.ping(PING_COOLDOWN);
     this.net.send({ t: "ping", id: Math.random().toString(36).slice(2, 8), p: tile });
     if (!this.data_.local) sfx.ping();
     this.showPing(tile);
