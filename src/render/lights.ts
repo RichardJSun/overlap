@@ -45,7 +45,8 @@ export class LightLayer {
   private last?: { sources: LightSource[]; glow: Block[]; ambient: number };
   private sig = "";
   private frame = -1;
-  private tick = () => { if (this.last && this.animating() && this.frame !== this.scene.game.loop.frame) this.draw(this.last.sources, this.last.glow, this.last.ambient); };
+  private settle = false; // one more full-intensity pass after an animation ends, even if frames were skipped
+  private tick = () => { if (this.last && (this.animating() || this.settle) && this.frame !== this.scene.game.loop.frame) this.draw(this.last.sources, this.last.glow, this.last.ambient); };
 
   constructor(private scene: Phaser.Scene, private level: Level, private ambient = 0x07080e, bloomAlpha = 0.12) {
     const w = level.w * TILE, h = level.h * TILE;
@@ -70,7 +71,9 @@ export class LightLayer {
     for (const k of this.born.keys()) if (!keys.includes(k) && !glowKeys.includes(k)) this.born.delete(k);
     this.last = { sources, glow, ambient };
     const sig = keys.join(";") + "|" + glowKeys.join(";") + "|" + ambient;
-    if (sig === this.sig && !this.animating()) return;
+    const anim = this.animating();
+    if (sig === this.sig && !anim && !this.settle) return;
+    this.settle = anim;
     this.sig = sig;
     this.frame = this.scene.game.loop.frame;
 

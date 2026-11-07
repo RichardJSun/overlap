@@ -105,6 +105,7 @@ export class MapView {
     if (!sub || !s || sub.on === on) return;
     sub.on = on;
     sub.img.setTexture(on ? "substation-on" : "substation");
+    this.scene.tweens.killTweensOf(sub.extras);
     sub.extras.forEach((o) => o.destroy());
     sub.extras = [];
     if (!on) return;
@@ -127,6 +128,7 @@ export class MapView {
   setDepth(d: number) { this.depth = d; this.base.setDepth(d); this.gates.forEach((g) => g.img.setDepth(d + 1)); return this; }
   destroy() {
     this.lamps.forEach((l) => l.timers.forEach((t) => t.remove()));
+    this.scene.tweens.killTweensOf([...this.base.list, ...this.gates.map((g) => g.img.list[0])]);
     this.base.destroy(); this.gates.forEach((g) => g.img.destroy());
     this.tex.destroy();
   }
