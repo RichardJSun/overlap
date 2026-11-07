@@ -63,6 +63,7 @@ export class Hud {
     if (status === "online" && peer) { el.textContent = `${partner} connected`; el.className = "net ok"; }
     else if (status === "online") { el.textContent = `Waiting for ${partner}`; el.className = "net wait"; }
     else if (status === "connecting") { el.textContent = "Connecting…"; el.className = "net wait"; }
+    else if (status === "replaced") { el.textContent = "Opened in another tab"; el.className = "net bad"; }
     else { el.textContent = "Reconnecting…"; el.className = "net bad"; }
   }
 

@@ -45,7 +45,8 @@ export class WebSocketTransport implements Transport {
     ws.onclose = (e) => {
       this.ws = undefined;
       this.setPeer(false);
-      if (this.closed || e.code === REPLACED) return;
+      if (this.closed) return;
+      if (e.code === REPLACED) return this.setStatus("replaced");
       this.setStatus("reconnecting");
       this.timer = setTimeout(() => this.connect(), this.delay);
       this.delay = Math.min(this.delay * 2, MAX_DELAY);

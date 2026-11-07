@@ -1,6 +1,6 @@
 import type { Msg } from "../shared/protocol.ts";
 
-export type NetStatus = "connecting" | "online" | "reconnecting";
+export type NetStatus = "connecting" | "online" | "reconnecting" | "replaced";
 
 /**
  * A two-party message pipe. Implementations must:

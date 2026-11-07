@@ -24,3 +24,12 @@ Empty repo. Plan and rules live in [HANDOFF.md](../HANDOFF.md).
 
 ![Magenta bridge](shots/d1-magenta-bridge.png)
 ![Ending](shots/after-d1.png)
+
+## 13:00 First deploy, M3 network
+- `cf deploy` worked on the first try: https://overlap.richardsun.workers.dev. The production Room relays pings, and the headless district 1 playthrough passes against production.
+- Merged the audio track: every sound is synthesized (no samples), through sfx/ambient/drone buses into a limiter. Peaks were measured with `OfflineAudioContext` renders, since an agent can't listen.
+- Merged the network track: `WebSocketTransport` with backoff reconnect, a DOM title screen with a 4-letter room code and a QR join link, and Playwright tests proving a ping round-trips through `cf dev` and that the title-screen join flow connects both roles.
+- Added a fourth connection status, "replaced", so a tab whose role was taken by another device says so instead of looking online.
+
+![Title](shots/title.png)
+![Lobby](shots/lobby.png)
