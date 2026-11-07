@@ -261,7 +261,7 @@ export class GuideScene extends Phaser.Scene {
         if (!this.data_.local && this.awake) sfx.ambient((this.di + this.powered.size / this.level.substations.length) / LEVELS.length);
         return this.redraw();
       case "district":
-        this.hud.card(`District ${this.di + 1} restored`, `Next: ${LEVELS[m.index].name}`);
+        this.hud.card(`District ${this.di + 1} restored`, this.level.restored ?? `Next: ${LEVELS[m.index].name}`);
         this.loadDistrict(m.index);
         this.cameras.main.fadeIn(500, 11, 16, 32);
         return;

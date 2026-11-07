@@ -17,6 +17,8 @@ export const LANTERN_RADIUS = 4;
 export type LevelJson = {
   name: string;
   intro?: string;
+  /** Radio line on the "district restored" card. */
+  restored?: string;
   lantern: ColorMask;
   budget: number;
   budgetPerSubstation: number;

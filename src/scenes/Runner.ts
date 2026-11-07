@@ -250,7 +250,7 @@ export class RunnerScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     const next = this.di + 1;
-    this.hud.card(`District ${this.di + 1} restored`, next < LEVELS.length ? `Next: ${LEVELS[next].name}` : "The city is coming back");
+    this.hud.card(`District ${this.di + 1} restored`, this.level.restored ?? (next < LEVELS.length ? `Next: ${LEVELS[next].name}` : "The city is coming back"));
     this.time.delayedCall(1100, () => this.cameras.main.fadeOut(450, 11, 16, 32));
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.transitioning = false;
