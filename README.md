@@ -10,20 +10,32 @@ A two-player co-op puzzle game about a city in blackout, made for WolfJam 2026 (
 
 ## The idea
 
-One player is the **Runner**. They walk the dark streets carrying a lantern and see only what light reaches. Outside the light there is nothing at all. The other player is the **Guide**, in the utility control room. The Guide sees the city map and its security drones, but sees the Runner only **on camera**: the streetlights are the control room's cameras, so the Guide sees the Runner only under a lit streetlight or inside a block that is back on the grid. The Guide drops pings and switches colored streetlights on and off within a power budget. The Runner can **flare** to show the Guide where they are.
+One player is the **Runner**, a field tech walking pitch-black streets with a lantern. They see only what light reaches, and outside the light there is nothing at all. The other player is the **Guide**, the night dispatcher in the utility's control room. The Guide sees the city map and its security drones, but the streetlights are the control room's only cameras, so the Guide sees the Runner only under a lit streetlight or inside a block that is back on the grid. The Guide drops pings, sends danger warnings, and switches colored streetlights on and off within a power budget. The Runner can **flare** their lantern to show the Guide where they are.
 
-Light colors add. A colored bridge or door exists only while all of its colors are in the light on it: a magenta bridge needs red and blue (extra colors don't hurt). Drones show up only under their own color. Colored glass **filters** on the street change the Runner's lantern color, so both players choose colors. Neither player can see the solution alone, so the puzzles happen where the two players' lights overlap.
+Light colors add. A colored bridge or door exists only while all of its colors shine on it, so a magenta bridge needs red and blue on the same tile (extra colors don't hurt). A drone shows up only under its own color. Colored glass **filters** on the street change the lantern's color, and in every district the Runner's glass brings colors that no streetlight has, so neither player can make the right mix alone.
 
-| Mix | Makes | Used for |
+| Mix | Makes | Where it matters |
 |---|---|---|
-| red lantern + blue streetlight | magenta | canal bridges, the last door |
-| red lantern + green streetlight | yellow | locked doors |
-| green + blue streetlights | cyan | the bridge in district 3 (the lantern doesn't matter) |
-| green streetlight alone | green | exposing green drones that hide in red light |
+| red lantern + blue streetlight | magenta | the canal bridge in district 1, locked doors |
+| red lantern + green streetlight | yellow | locked doors, and a yellow drone that only shows where both lights overlap |
+| green + blue | cyan | bridges, from glass or from two streetlights |
+| red + green + blue | white | the last door in the city |
 
-Every color also has a shape, so the game is playable without telling colors apart: red is a triangle, green a circle, blue a square, and mixes overlay their shapes.
+Every color also has a shape, so the game is playable without telling colors apart. Red is a triangle, green a circle, blue a square, and mixes overlay their shapes.
 
-Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach one tile farther. The lantern starts every district at 3 tiles. When every block is lit, both screens show the same view for the first time.
+Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach one tile farther. The lantern starts every district at 3 tiles.
+
+## The story
+
+The game opens in the field tech's dark bedroom with the phone ringing on the nightstand. Answer it, and dispatch apologises for the hour while the skyline in the window turns from white to red, green, and blue and goes out. After that, the story comes only from in-world records. Each district opens on a call from a resident who has noticed something strange, and closes on a line in the utility's log. When the last block comes back, the separated colors slide together into white across the city.
+
+| District | The trick |
+|---|---|
+| 1 · Canal Street | the tutorial; red lantern + blue streetlight raise a magenta bridge |
+| 2 · Market Street | the city has only blue light; the Runner's red and green glass bring the rest |
+| 3 · Old Locks | only green streetlights, a long cyan bridge that needs two of them, and two glass colors to juggle |
+| 4 · Signal Yard | a red drone that no streetlight can show, so the Guide can only warn |
+| 5 · Grid Central | a yellow drone that only exists where the Runner's red meets a green streetlight, and a white door |
 
 ## How to play
 
@@ -35,12 +47,13 @@ No second device? Open [`?local=1`](https://overlap.richardsun.workers.dev/?loca
 
 | | Runner | Guide |
 |---|---|---|
-| Move | arrows / WASD, or tap a tile | — |
-| Flare | Space, or tap yourself (4 s cooldown) | — |
-| Ping | — | tap any tile (2 s cooldown) |
-| Streetlight | — | tap a streetlight to switch it (power budget shown as bars) |
+| Move | arrows / WASD, or tap a tile | |
+| Flare | Space, or tap yourself (4 s cooldown) | |
+| Ping | | tap any tile (2 s cooldown) |
+| Streetlight | | tap a streetlight to switch it (power budget shown as bars) |
+| Danger ping | | right-click a tile, or hold on a phone |
 
-The game opens in the field tech's dark bedroom, with the phone ringing on the nightstand. Answer it and you hear from dispatch while the city outside the window splits from white into red, green, and blue and goes dark. District 1 is a tutorial: each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
+District 1 is a tutorial. Each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
 
 A drone touching the Runner sends them back to the last substation. If the Guide switches off the light holding up the bridge the Runner is standing on, the bridge vanishes, and so does the Runner. There are no lives and no game over.
 
@@ -52,10 +65,10 @@ A drone touching the Runner sends them back to the last substation. If the Guide
 
 ```mermaid
 flowchart LR
-  subgraph Laptop["Runner (laptop)"]
+  subgraph Laptop["Runner (computer)"]
     R[Runner scene<br/>authoritative: position, drones,<br/>substations, district]
   end
-  subgraph Phone["Guide (phone)"]
+  subgraph Phone["Guide (second computer or phone)"]
     G[Guide scene<br/>authoritative: streetlights, pings]
   end
   subgraph CF["Cloudflare Worker"]

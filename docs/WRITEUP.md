@@ -17,9 +17,11 @@ We wanted a co-op game where "visibility" is the whole mechanic, not a fog-of-wa
 
 A city is in a blackout. The **Runner** walks pitch-black streets with a lantern. The **Guide**, in the utility control room, sees the map and the security drones, drops pings, and switches colored streetlights on and off within a power budget. The streetlights are also the control room's cameras: the Guide sees the Runner only under a lit streetlight or in a powered block, so the Runner flares their lantern to say "I'm here".
 
-Light colors add. Red lantern + blue streetlight makes magenta, and some canal bridges exist only in magenta light. Red + green makes yellow, which opens locked doors. In the last district, green + blue streetlights make cyan for a bridge the lantern can't help with. Green security drones are invisible in red light, so the Guide has to warn the Runner with pings or flood the street with green. Colored glass filters on the street change the lantern's color, so the Runner picks colors too, and the Guide plans around them.
+Light colors add. Red lantern + blue streetlight makes magenta, and the first canal bridge exists only in magenta light. Red + green makes yellow, which opens locked doors. Colored glass on the street changes the lantern's color, and in every district the glass brings colors that no streetlight has, so the two players have to combine what each of them holds. Drones show up only in their own color. One is red in a district with no red streetlights, so the Guide can only shout. Another is yellow and only appears where the Runner's red light meets a green streetlight. The last door in the city opens only in white light, which takes the lantern and two streetlights on one tile.
 
-Each substation the Runner reaches powers its block for good, moves the checkpoint, and gives the Guide more power. When the third district is lit, both screens show the same view for the first time.
+Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach a tile farther. There are five districts. When the last one is lit, the separated colors slide back together into white and both screens show the same view for the first time.
+
+The story is told without a narrator. The game opens on the field tech asleep, with dispatch calling. After that, each district opens on a resident's call about something strange they've seen, and closes on a line in the utility's log.
 
 Every color has a shape too (red triangle, green circle, blue square), so the game works without telling colors apart.
 
