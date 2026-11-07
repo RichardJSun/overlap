@@ -36,7 +36,10 @@ export class Room extends DurableObject {
     try { m = JSON.parse(raw); } catch { return; }
     if (!m || typeof m.t !== "string" || m.t === "peer" || m.t === "hello") return;
     const { role } = ws.deserializeAttachment() as { role: Role };
-    if (m.t === "snapshot") await this.ctx.storage.put("snapshot", m.s);
+    if (m.t === "snapshot") {
+      if (role !== "runner") return; // only the runner owns world state
+      await this.ctx.storage.put("snapshot", m.s);
+    }
     for (const p of this.open(other(role))) p.send(raw);
   }
 
