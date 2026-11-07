@@ -101,7 +101,7 @@ Richard's notes, also done:
 
 ![Quieter HUD](shots/d1-magenta-bridge.png)
 
-## 15:35 White light, a story, and cameras you can feel
+## 15:10 White light, a story, and cameras you can feel
 - **White comes apart.** Richard pointed out that white light is all the colors together, so the opener now starts with every streetlight burning white. When the grid fails, each white light splits into red, green, and blue, which drift apart and die one by one. The ending runs it backwards: separated colors slide together into white as the power sweeps back on.
 - **Story.** A Mythos review suggested a light radio story, and Richard's note was that the first draft of the dialogue was dull and read like a physics lecture. The story is now told only through in-world records. The opener is the utility's log ("20:43 · Calls from Canal Street. Every streetlight has split into red, green and blue."). Each district opens on a resident's call that hints at its trick ("There's a bridge over the canal, but it only shows up when the light turns purple."). Each district closes on a log line with a concrete detail ("Someone is already selling soup."). A burst of radio static plays before each call.
 - **Cameras.** The blackout breaks into analog static, and the log says the streetlights are the only cameras left. The Guide's map carries faint live static, and every lit streetlight gets a CAM tag. We kept the full map for the Guide instead of making them flip between camera feeds, because planning colors and the power budget needs the whole map.
