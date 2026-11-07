@@ -185,8 +185,8 @@ export class GuideScene extends Phaser.Scene {
         if (!this.data_.local) sfx.substation();
         return this.redraw();
       case "district":
-        this.cameras.main.fadeOut(300, 11, 16, 32);
-        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => { this.loadDistrict(m.index); this.cameras.main.fadeIn(400, 11, 16, 32); });
+        this.loadDistrict(m.index);
+        this.cameras.main.fadeIn(500, 11, 16, 32);
         return;
       case "ending": this.scene.start("ending", { ...this.data_, role: "guide", district: this.di }); return;
     }

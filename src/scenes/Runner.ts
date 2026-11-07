@@ -140,6 +140,7 @@ export class RunnerScene extends Phaser.Scene {
     const nx = this.pos.x + d.x, ny = this.pos.y + d.y;
     if (!this.canEnter(nx, ny)) {
       this.target = null;
+      if (nx === this.level.exit.x && ny === this.level.exit.y) this.hud.toast("The exit is dark. Power every substation first.");
       this.moving = true;
       this.tweens.add({ targets: this.runner, x: this.runner.x + d.x * 4, y: this.runner.y + d.y * 4, duration: 60, yoyo: true, onComplete: () => (this.moving = false) });
       return;
