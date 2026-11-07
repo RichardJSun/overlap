@@ -10,7 +10,7 @@ import { MapView } from "../render/map.ts";
 import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
 import { NAMES, reveals, type ColorMask } from "../shared/color.ts";
-import { dronePos, droneVisible, LANTERN_RADIUS, passable, sources, TILE, type Level } from "../shared/level.ts";
+import { dronePos, droneVisible, lanternRadius, passable, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Vec } from "../shared/protocol.ts";
 import { fitCamera, HUD_TOP } from "./fit.ts";
@@ -162,17 +162,20 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private refreshField() {
-    this.field = lightField(this.level, sources(this.level, this.pos, this.lightsOn, this.lantern));
+    this.field = lightField(this.level, sources(this.level, this.pos, this.lightsOn, this.lantern, this.reach));
     for (const g of this.map!.gates) g.img.setVisible(reveals(this.field[g.y * this.level.w + g.x], g.color));
   }
 
   private updateObjective() {
     const left = this.level.substations.length - this.powered.size;
-    this.hud.objective(left ? `Power the substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Reach the exit", !left);
+    this.hud.objective(`${left ? `Power the substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Reach the exit"} · lantern ${this.reach} tiles`, !left);
   }
 
   /** How much of the whole city is back on, 0..1, for the ambient pad. */
   private get progress() { return (this.di + this.powered.size / this.level.substations.length) / LEVELS.length; }
+
+  /** How far the lantern reaches right now, in tiles. */
+  private get reach() { return lanternRadius(this.powered.size); }
 
   private get exitOpen() { return this.powered.size === this.level.substations.length; }
 
@@ -231,6 +234,7 @@ export class RunnerScene extends Phaser.Scene {
     const s = this.level.substations.find((s) => s.x === this.pos.x && s.y === this.pos.y);
     if (s && !this.powered.has(s.id)) {
       this.powered.add(s.id);
+      this.refreshField(); // the lantern reaches farther now
       this.checkpoint = { pos: { ...this.pos }, lantern: this.lantern };
       this.map!.setPowered(s.id);
       this.net.send({ t: "substation", id: s.id });
@@ -241,7 +245,7 @@ export class RunnerScene extends Phaser.Scene {
         this.map!.setExitOpen(true);
         this.time.delayedCall(900, () => sfx.exitOpen());
         this.hud.toast("Block restored. The exit is open.");
-      } else this.hud.toast("Block restored. Your Guide has more power.");
+      } else this.hud.toast("Block restored. Your lantern reaches farther, and your Guide has more power.");
       this.updateObjective();
     }
     if (this.pos.x === this.level.exit.x && this.pos.y === this.level.exit.y && this.exitOpen) this.nextDistrict();
@@ -407,8 +411,9 @@ export class RunnerScene extends Phaser.Scene {
 
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
     if (this.exitOpen) glow.push(this.exitGlow);
-    const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn, this.lantern);
-    lit[0].radius = LANTERN_RADIUS;
+    // A flare throws the light wider for a moment. It's only for show: gates and drones follow the real reach.
+    const surge = Math.max(0, 1 - (time - this.lastFlare) / 1100);
+    const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn, this.lantern, this.reach * (1 + surge * Math.sin(Math.min(1, (time - this.lastFlare) / 250) * Math.PI / 2)));
     this.lightLayer!.draw(lit, glow);
   }
 }

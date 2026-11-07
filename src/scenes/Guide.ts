@@ -10,7 +10,7 @@ import { MapView } from "../render/map.ts";
 import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
 import { hex, NAMES, type ColorMask } from "../shared/color.ts";
-import { budgetFor, droneVisible, onCamera, sources, TILE, type Level } from "../shared/level.ts";
+import { budgetFor, droneVisible, lanternRadius, onCamera, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Snapshot, Vec } from "../shared/protocol.ts";
 import { fitCamera, HUD_TOP } from "./fit.ts";
@@ -157,7 +157,7 @@ export class GuideScene extends Phaser.Scene {
     const ox = this.lastSeenPos.x < 4 ? 0.1 : this.lastSeenPos.x > this.level.w - 5 ? 0.9 : 0.5;
     this.ghostLabel.setVisible(ghost).setPosition(gx, gy).setOrigin(ox, -1.1);
     // The lantern's own pool would give the runner away, so it shows only while they're on camera.
-    const lit = sources(this.level, this.runnerPos, this.lightsOn, this.lantern);
+    const lit = sources(this.level, this.runnerPos, this.lightsOn, this.lantern, lanternRadius(this.powered.size));
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
     if (this.powered.size === this.level.substations.length) glow.push(this.exitGlow);
     this.lightLayer!.draw(seen ? lit : lit.slice(1), glow);
