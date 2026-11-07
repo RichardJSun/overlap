@@ -10,3 +10,4 @@ playwright-report/
 !.dev.vars.example
 !.env.example
 .claude/.cc-writes
+.claude/worktrees/
