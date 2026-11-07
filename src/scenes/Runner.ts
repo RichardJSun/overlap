@@ -233,7 +233,7 @@ export class RunnerScene extends Phaser.Scene {
       this.net.send({ t: "substation", id: s.id });
       sfx.substation();
       sfx.ambient(this.progress);
-      this.cameras.main.flash(500, 255, 211, 138);
+      this.cameras.main.flash(220, 255, 211, 138); // a pulse, not a blackout-white frame
       if (this.exitOpen) {
         this.map!.setExitOpen(true);
         this.time.delayedCall(900, () => sfx.exitOpen());

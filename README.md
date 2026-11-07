@@ -92,6 +92,8 @@ bun run dev          # cf dev: client + Worker + Durable Object on http://localh
 bun run test         # Vitest: color, lighting, levels and solver, audio
 bun run e2e          # Playwright: two-tab room test through cf dev
 node scripts/autoplay.mjs   # headless full playthrough of ?local=1 (needs a dev server)
+node scripts/net-check.mjs  # two browsers play one room through the deployed Worker
+node scripts/record-demo.mjs http://localhost:5173 docs/demo.mp4   # demo video with the game's own sound
 bun run deploy       # cf deploy
 ```
 

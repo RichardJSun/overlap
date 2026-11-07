@@ -1,4 +1,4 @@
-# Overlap — Devpost writeup (draft)
+# Overlap — Devpost writeup
 
 ## How to access
 
