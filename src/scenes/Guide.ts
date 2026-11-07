@@ -73,9 +73,13 @@ export class GuideScene extends Phaser.Scene {
     this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room, this.data_.local);
     this.events.once("shutdown", () => this.hud.destroy());
     this.tutor = new Tutor(this, this.hud, "guide");
-    this.net.onMessage((m) => this.onMsg(m));
-    this.net.onStatus((s) => { this.status = s; this.hud.net(s, this.peer); });
+    // Transports keep every listener, so these go quiet once the scene stops.
+    const alive = { on: true };
+    this.events.once("shutdown", () => (alive.on = false));
+    this.net.onMessage((m) => alive.on && this.onMsg(m));
+    this.net.onStatus((s) => { if (alive.on) { this.status = s; this.hud.net(s, this.peer); } });
     this.net.onPeer((c) => {
+      if (!alive.on) return;
       this.peer = c;
       this.hud.net(this.status, c);
       if (c) this.clockArmed = true;
@@ -281,6 +285,9 @@ export class GuideScene extends Phaser.Scene {
         this.hud.card("Power restored", this.level.restored ?? this.level.name);
         this.loadDistrict(m.index);
         this.cameras.main.fadeIn(500, 11, 16, 32);
+        return;
+      case "breaker":
+        this.scene.start("breaker", { ...this.data_, role: "guide", rule: m.rule });
         return;
       case "ending":
         this.scene.start("ending", { ...this.data_, role: "guide", district: this.di, stats: m.ms === undefined ? undefined : { ms: m.ms, caught: m.caught ?? 0 } });

@@ -108,11 +108,16 @@ export class RunnerScene extends Phaser.Scene {
     this.scale.on("resize", () => this.fit());
     // ?district=N starts at district N (for testing and for showing one puzzle).
     const d = Number(new URLSearchParams(location.search).get("district")) - 1;
+    if (d === LEVELS.length) { this.scene.start("breaker", { ...this.data_, role: "runner", lantern: LEVELS[d - 1].lantern }); return; } // ?district=6: the main breaker
     this.loadDistrict(d >= 0 && d < LEVELS.length ? d : 0);
     // Listen only once a level is loaded: a peer that is already connected triggers a snapshot at once.
-    this.net.onMessage((m) => this.onMsg(m));
-    this.net.onStatus((s) => { this.status = s; this.hud.net(s, this.peer); });
+    // Transports keep every listener, so these go quiet once the scene stops.
+    const alive = { on: true };
+    this.events.once("shutdown", () => (alive.on = false));
+    this.net.onMessage((m) => alive.on && this.onMsg(m));
+    this.net.onStatus((s) => { if (alive.on) { this.status = s; this.hud.net(s, this.peer); } });
     this.net.onPeer((c) => {
+      if (!alive.on) return;
       this.peer = c;
       this.hud.net(this.status, c);
       if (c) this.sendSnapshot();
@@ -261,8 +266,7 @@ export class RunnerScene extends Phaser.Scene {
       this.transitioning = false;
       if (next >= LEVELS.length) {
         const stats: RunStats = { ms: Math.round(this.time.now - this.runStart), caught: this.caught };
-        this.net.send({ t: "ending", ...stats });
-        this.scene.start("ending", { ...this.data_, role: "runner", district: this.di, stats });
+        this.scene.start("breaker", { ...this.data_, role: "runner", stats, lantern: this.lantern });
         return;
       }
       this.net.send({ t: "district", index: next });

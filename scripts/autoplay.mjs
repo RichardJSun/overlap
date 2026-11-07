@@ -3,7 +3,7 @@
 // Usage: node scripts/autoplay.mjs [baseUrl] [startDistrict]
 import { chromium } from "@playwright/test";
 import { mkdirSync } from "node:fs";
-import { deaths, install, playToEnd } from "./lib/drive.mjs";
+import { deaths, install, playToEnd, solveBreaker } from "./lib/drive.mjs";
 
 const base = process.argv[2] ?? "http://localhost:5173";
 const start = process.argv[3] ?? "1";
@@ -29,6 +29,12 @@ const { actions } = await playToEnd(page, {
     await page.screenshot({ path: `docs/shots/d${di + 1}-sub${n}.png` });
   },
 });
+console.log(`main breaker at ${secs()}s`);
+const said = await solveBreaker(page, {
+  pause: 400,
+  onTrip: () => page.screenshot({ path: "docs/shots/breaker.png" }),
+});
+console.log(`  guide saw: ${said.join(" | ")}`);
 await page.waitForTimeout(6000);
 await page.screenshot({ path: "docs/shots/ending.png" });
 const log = await deaths(page);

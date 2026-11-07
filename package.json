@@ -12,6 +12,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@marcbachmann/cel-js": "^8.0.0",
     "phaser": "^4.2.1",
     "qrcode": "^1.5.4"
   },

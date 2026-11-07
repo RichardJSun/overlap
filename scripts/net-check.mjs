@@ -38,5 +38,26 @@ const lit = await runner.evaluate(() => [...window.__games[0].scene.getScene("ru
 check(lit.includes("L1"), "the guide's streetlight reaches the runner");
 await runner.screenshot({ path: "docs/shots/net-runner.png" });
 await guide.screenshot({ path: "docs/shots/net-guide-phone.png" });
+// The main breaker over the Worker. The Guide joins after the Runner is already there, then reloads.
+const code2 = Array.from({ length: 4 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ"[Math.floor(Math.random() * 24)]).join("");
+await runner.goto(`${base}/?room=${code2}&role=runner&district=6`);
+const inBreaker = (p) => p.waitForFunction(() => window.__games?.[0]?.scene.getScene("breaker")?.sys.isActive(), null, { timeout: 30000 }).then(() => true, () => false);
+check(await inBreaker(runner), "?district=6 opens the main breaker");
+await guide.goto(`${base}/?room=${code2}&role=guide`);
+check(await inBreaker(guide), "a guide who joins late lands at the breaker");
+await guide.reload();
+check(await inBreaker(guide), "a guide who reloads lands at the breaker again");
+await guide.waitForTimeout(400);
+await guide.screenshot({ path: "docs/shots/net-breaker-phone.png" });
+const pull = async () => { await runner.locator(".bk-lever").click(); await guide.waitForTimeout(600); return guide.locator(".bk-last").textContent(); };
+check(/locked/.test(await pull()), "the broken rule keeps the breaker locked");
+const install = async (rule) => { await guide.locator(".bk-text").fill(rule); await guide.locator(".bk-install").click(); await runner.waitForTimeout(600); };
+await install("line_clear && (load < capacity || override)");
+check((await runner.locator(".bk-rule code").textContent()) === "line_clear && (load < capacity || override)", "the guide's rule reaches the runner");
+check(/tripped/.test(await pull()), "without the override key the surge trips it");
+await runner.locator(".bk-key").click();
+await runner.locator(".bk-lever").click();
+const ended = (p) => p.waitForFunction(() => window.__games?.[0]?.scene.getScene("ending")?.sys.isActive(), null, { timeout: 15000 }).then(() => true, () => false);
+check((await ended(runner)) && (await ended(guide)), "closing the breaker takes both players to the ending");
 check(errors.length === 0, `no console errors${errors.length ? ": " + errors.join(" | ") : ""}`);
 await b1.close(); await b2.close();

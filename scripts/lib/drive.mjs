@@ -110,3 +110,38 @@ export async function playToEnd(page, { onDistrict, onPowered, pingDrones = fals
 }
 
 export const deaths = (page) => page.evaluate(() => window.__deaths);
+
+/**
+ * Plays the main breaker in ?local=1 the way two players would. The Guide's first fix passes the
+ * safety tests but trips on the live surge; then the Runner turns the override key and the Guide
+ * adds it to the rule. The rule is typed into the real textarea, so lost keystrokes fail loudly.
+ * Returns what the Guide's panel said after each pull of the lever.
+ */
+export async function solveBreaker(page, { typeDelay = 0, pause = 0, onTrip } = {}) {
+  await page.waitForFunction(() => window.__games?.length === 2 && window.__games.every((g) => g.scene.getScene("breaker")?.sys.isActive()), null, { timeout: 30000 });
+  await page.waitForTimeout(pause);
+  const text = page.locator('[data-role="guide"] .bk-text'), said = [];
+  const installRule = async (rule) => {
+    await text.fill("");
+    await text.pressSequentially(rule, { delay: typeDelay });
+    const typed = await text.inputValue();
+    if (typed !== rule) throw new Error(`typed ${JSON.stringify(typed)}, wanted ${JSON.stringify(rule)}`);
+    await page.locator('[data-role="guide"] .bk-install').click();
+    await page.waitForTimeout(pause);
+  };
+  const pullLever = async () => {
+    await page.locator('[data-role="runner"] .bk-lever').click();
+    await page.waitForTimeout(200);
+    said.push(await page.locator('[data-role="guide"] .bk-last').textContent());
+  };
+  await installRule("line_clear && load < capacity");
+  await pullLever();
+  await onTrip?.();
+  await page.waitForTimeout(pause);
+  await page.locator('[data-role="runner"] .bk-key').click();
+  await page.waitForTimeout(pause / 2);
+  await installRule("line_clear && (load < capacity || override)");
+  await pullLever();
+  await page.waitForFunction(() => window.__games.every((g) => g.scene.getScene("ending")?.sys.isActive()), null, { timeout: 15000 });
+  return said;
+}
