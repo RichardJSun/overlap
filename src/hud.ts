@@ -38,7 +38,18 @@ const CSS = `
   background:rgba(11,16,32,.92);border:1px solid var(--edge);color:var(--ink);text-align:center;line-height:1.4;
   opacity:0;transform:translate(-50%,6px);transition:opacity .2s ease,transform .2s var(--ease)}
 .hud .toast.show{opacity:1;transform:translate(-50%,0)}
-.hud.guide .toast{bottom:76px}
+.hud.guide .toast{bottom:100px}
+.hud.runner .toast{bottom:52px}
+.hud .objective{position:absolute;left:12px;bottom:14px;max-width:calc(100% - 24px);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud.guide .objective{bottom:72px}
+.hud .objective .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
+.hud .objective.done .lbl{color:var(--green)}
+.hud .card{position:absolute;left:50%;top:42%;box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);padding:16px 26px 14px;text-align:center;
+  background:rgba(11,16,32,.94);border:1px solid var(--amber);box-shadow:0 0 40px rgba(255,211,138,.18);opacity:0;transform:translate(-50%,-50%) scale(.96);
+  transition:opacity .35s ease,transform .45s var(--ease)}
+.hud .card.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.hud .card h3{margin:0;font:700 26px/1 var(--tape);font-stretch:condensed;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.hud .card p{margin:8px 0 0;font-size:13px;color:var(--dim)}
 .hud .bottom{position:absolute;left:0;right:0;bottom:0;height:64px;box-sizing:border-box;padding:6px 12px;display:grid;grid-template-rows:auto 1fr;gap:4px;
   background:var(--night);border-top:1px solid var(--edge)}
 .hud .hint{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:11px;line-height:12px;color:var(--faint);text-wrap:balance}
@@ -80,7 +91,7 @@ export class Hud {
     this.el.className = `hud ${role}`;
     this.el.innerHTML = `
       <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
-      <div class="intro off"></div><div class="toast" role="status"></div>
+      <div class="intro off"></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
       ${role === "guide" ? `<div class="bottom"><div class="hint"></div><div class="deck"><span class="lbl">Power</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
@@ -143,6 +154,21 @@ export class Hud {
     bar.style.transition = `transform ${cooldownMs}ms linear`;
     bar.style.transform = "";
     window.setTimeout(() => box.classList.remove("charging"), cooldownMs);
+  }
+
+  /** The current goal, always visible in the corner. `done` turns the label green. */
+  objective(text: string, done = false) {
+    this.q(".obj").textContent = text;
+    this.q(".objective").classList.toggle("done", done);
+  }
+
+  /** A short centered card for milestones, e.g. a district restored. */
+  card(title: string, sub = "", ms = 1800) {
+    const el = this.q(".card");
+    el.querySelector("h3")!.textContent = title;
+    el.querySelector("p")!.textContent = sub;
+    el.classList.add("show");
+    window.setTimeout(() => el.classList.remove("show"), ms);
   }
 
   hint(text: string) { const el = this.q(".hint"); if (el) el.textContent = text; }

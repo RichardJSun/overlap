@@ -12,12 +12,12 @@ import { fitCamera } from "./fit.ts";
 
 /** Both clients show this same view: the city sweeps back on, then both characters stand together. */
 export class EndingScene extends Phaser.Scene {
-  private info!: SceneData & { role: Role; district: number };
+  private info!: SceneData & { role: Role; district: number; stats?: { ms: number; caught: number } };
   private credits?: HTMLDivElement;
 
   constructor() { super("ending"); }
 
-  init(data: SceneData & { role: Role; district: number }) { this.info = data; }
+  init(data: EndingScene["info"]) { this.info = data; }
 
   create() {
     makeTextures(this);
@@ -57,6 +57,6 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private showCredits() {
-    this.credits = showCredits(this.game.canvas.parentElement!, () => location.assign(this.info.local ? "?local=1" : location.pathname));
+    this.credits = showCredits(this.game.canvas.parentElement!, () => location.assign(this.info.local ? "?local=1" : location.pathname), this.info.stats);
   }
 }

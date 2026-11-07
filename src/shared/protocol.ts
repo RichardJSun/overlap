@@ -14,7 +14,7 @@ export type Msg =
   | { t: "district"; index: number }
   | { t: "lantern"; c: number } // runner picked up a filter
   | { t: "flare"; p: Vec } // runner flashed their lantern so the guide can find them
-  | { t: "ending" };
+  | { t: "ending"; ms?: number; caught?: number }; // run time and drone catches, for the credits
 
 export type Snapshot = {
   district: number;

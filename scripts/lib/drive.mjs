@@ -29,7 +29,7 @@ export async function install(page) {
         const s = runner();
         if (!s.sys.isActive()) return { done: true };
         if (s.moving || s.transitioning) return { wait: 25 };
-        const p = window.__overlap.plan(window.__overlap.LEVELS[s.di], { from: { pos: s.pos, lightsOn: [...s.lightsOn], powered: [...s.powered] } });
+        const p = window.__overlap.plan(window.__overlap.LEVELS[s.di], { from: { pos: s.pos, lightsOn: [...s.lightsOn], powered: [...s.powered], lantern: s.lantern } });
         if (!p || !p.length) return { wait: 100, stuck: !p };
         if (p[0].toggle) return { toggle: p[0].toggle };
         const now = (s.time.now - s.t0) / 1000;

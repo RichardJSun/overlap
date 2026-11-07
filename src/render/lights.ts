@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { TILE, type Level } from "../shared/level.ts";
 import type { LightSource } from "../shared/lighting.ts";
-import { windowsIn } from "./map.ts";
+import { FACADE, windowsIn } from "./map.ts";
 import { castRays } from "./visibility.ts";
 import { lightTint, PAL } from "./textures.ts";
 
@@ -44,6 +44,8 @@ export class LightLayer {
   private born = new Map<string, number>(); // source key -> first frame it was drawn, for the flicker
   private last?: { sources: LightSource[]; glow: Block[]; ambient: number };
   private sig = "";
+  /** Roof rects (px) that light never lands on: building tops stay dark, only street-facing faces catch light. */
+  private roofs: { x: number; y: number; w: number; h: number }[] = [];
   private frame = -1;
   private settle = false; // one more full-intensity pass after an animation ends, even if frames were skipped
   private tick = () => { if (this.last && (this.animating() || this.settle) && this.frame !== this.scene.game.loop.frame) this.draw(this.last.sources, this.last.glow, this.last.ambient); };
@@ -55,6 +57,16 @@ export class LightLayer {
     this.polyG = scene.make.graphics({}, false);
     this.bloom = scene.add.image(0, 0, this.rt.texture).setOrigin(0).setBlendMode(ADD).setAlpha(bloomAlpha).setVisible(bloomAlpha > 0);
     scene.events.on("postupdate", this.tick);
+    const lamp = new Set(level.lights.map((l) => l.y * level.w + l.x));
+    for (const facade of [false, true])
+      for (let y = 0; y < level.h; y++)
+        for (let x = 0; x < level.w; ) {
+          const roof = (x: number) => level.solid(x, y) && !lamp.has(y * level.w + x) && (!level.solid(x, y + 1) && y + 1 < level.h) === facade;
+          if (!roof(x)) { x++; continue; }
+          const x0 = x;
+          while (x < level.w && roof(x)) x++;
+          this.roofs.push({ x: x0 * TILE, y: y * TILE, w: (x - x0) * TILE, h: facade ? TILE - FACADE : TILE });
+        }
   }
 
   setDepth(d: number) { this.rt.setDepth(d); this.bloom.setDepth(d + 1); return this; }
@@ -93,6 +105,7 @@ export class LightLayer {
       if (s) this.addPool(rt, { x: s.x, y: s.y, radius: 2, color: 0 }, PAL.warm, 0.8 * k);
     });
     sources.forEach((s, i) => this.addPool(rt, s, lightTint(s.color), this.flicker(now - this.born.get(keys[i])!), i));
+    for (const r of this.roofs) rt.fill(0x000000, 1, r.x, r.y, r.w, r.h);
     rt.render();
   }
 

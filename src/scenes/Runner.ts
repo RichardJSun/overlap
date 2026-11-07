@@ -8,19 +8,22 @@ import { LightLayer } from "../render/lights.ts";
 import { MapView } from "../render/map.ts";
 import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
-import { reveals } from "../shared/color.ts";
+import { NAMES, reveals, type ColorMask } from "../shared/color.ts";
 import { dronePos, droneVisible, LANTERN_RADIUS, passable, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Vec } from "../shared/protocol.ts";
 import { fitCamera, HUD_TOP } from "./fit.ts";
 
 const STEP_MS = 120;
+const FLARE_COOLDOWN = 4000;
 const DIRS: Record<string, Vec> = {
   ArrowUp: { x: 0, y: -1 }, KeyW: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, KeyS: { x: 0, y: 1 },
   ArrowLeft: { x: -1, y: 0 }, KeyA: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 }, KeyD: { x: 1, y: 0 },
 };
 
-/** The Runner: authoritative for its own position, drones, substations, and the district index. */
+export type RunStats = { ms: number; caught: number };
+
+/** The Runner: authoritative for its own position, lantern, drones, substations, and the district index. */
 export class RunnerScene extends Phaser.Scene {
   private net!: Transport;
   private data_!: SceneData;
@@ -31,7 +34,8 @@ export class RunnerScene extends Phaser.Scene {
   private di = 0;
   private level!: Level;
   private pos: Vec = { x: 0, y: 0 };
-  private checkpoint: Vec = { x: 0, y: 0 };
+  private lantern: ColorMask = 4;
+  private checkpoint = { pos: { x: 0, y: 0 }, lantern: 4 as ColorMask };
   private lightsOn = new Set<string>();
   private powered = new Set<string>();
   private field!: Uint8Array;
@@ -40,13 +44,17 @@ export class RunnerScene extends Phaser.Scene {
   private queued: Vec[] = []; // a tap shorter than one frame still moves one tile
   private target: Vec | null = null;
   private t0 = 0;
+  private runStart = 0;
+  private caught = 0;
   private invulnUntil = 0;
+  private lastFlare = -Infinity;
   private transitioning = false;
   private awake = false;
 
   private map?: MapView;
   private lightLayer?: LightLayer;
   private runner!: Phaser.GameObjects.Image;
+  private filterImgs: Phaser.GameObjects.Image[] = [];
   private drones: { def: Level["drones"][number]; img: Phaser.GameObjects.Image; tile: Vec }[] = [];
   private dronesDirty = false;
   private lastDroneSend = 0;
@@ -60,6 +68,7 @@ export class RunnerScene extends Phaser.Scene {
     this.held = [];
     this.queued = [];
     this.target = null;
+    this.caught = 0;
   }
 
   create() {
@@ -70,6 +79,7 @@ export class RunnerScene extends Phaser.Scene {
     const kb = this.input.keyboard!;
     kb.on("keydown", (e: KeyboardEvent) => {
       this.wake();
+      if (e.code === "Space") { e.preventDefault(); if (!e.repeat) this.flare(); return; }
       const d = DIRS[e.code];
       if (!d) return;
       e.preventDefault();
@@ -84,11 +94,13 @@ export class RunnerScene extends Phaser.Scene {
       this.wake();
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       const t = { x: Math.floor(w.x / TILE), y: Math.floor(w.y / TILE) };
+      if (t.x === this.pos.x && t.y === this.pos.y) return this.flare(); // tap yourself to flare
       if (t.x >= 0 && t.y >= 0 && t.x < this.level.w && t.y < this.level.h) this.target = t;
     });
 
     this.runner = this.add.image(0, 0, "runner").setDepth(20);
     this.scale.on("resize", () => this.fit());
+    this.runStart = this.time.now;
     // ?district=N starts at district N (for testing and for showing one puzzle).
     const d = Number(new URLSearchParams(location.search).get("district")) - 1;
     this.loadDistrict(d >= 0 && d < LEVELS.length ? d : 0);
@@ -118,26 +130,36 @@ export class RunnerScene extends Phaser.Scene {
     this.map?.destroy();
     this.lightLayer?.destroy();
     this.drones.forEach((d) => d.img.destroy());
+    this.filterImgs.forEach((f) => f.destroy());
     this.lightsOn.clear();
     this.powered.clear();
     this.map = new MapView(this, this.level, { glyphs: true }).setDepth(0);
-    this.lightLayer = new LightLayer(this, this.level);
+    // Pitch black outside every light: the Runner sees nothing the light doesn't reach.
+    this.lightLayer = new LightLayer(this, this.level, 0x000000);
     this.lightLayer.setDepth(10);
+    this.filterImgs = this.level.filters.map((f) => this.add.image(f.x * TILE + TILE / 2, f.y * TILE + TILE / 2, `filter-${f.color}`).setDepth(2));
     this.drones = this.level.drones.map((def) => ({ def, img: this.add.image(0, 0, `drone-${def.color}`).setDepth(15).setVisible(false), tile: { ...def.path[0] } }));
     this.pos = { ...this.level.start };
-    this.checkpoint = { ...this.level.start };
+    this.lantern = this.level.lantern;
+    this.checkpoint = { pos: { ...this.pos }, lantern: this.lantern };
     this.runner.setPosition(this.pos.x * TILE + TILE / 2, this.pos.y * TILE + TILE / 2);
     this.t0 = this.time.now;
     this.moving = false;
     this.refreshField();
     this.fit();
     this.hud.district(i, this.level.name, this.level.intro);
+    this.updateObjective();
     if (this.awake) sfx.ambient(this.progress);
   }
 
   private refreshField() {
-    this.field = lightField(this.level, sources(this.level, this.pos, this.lightsOn));
+    this.field = lightField(this.level, sources(this.level, this.pos, this.lightsOn, this.lantern));
     for (const g of this.map!.gates) g.img.setVisible(reveals(this.field[g.y * this.level.w + g.x], g.color));
+  }
+
+  private updateObjective() {
+    const left = this.level.substations.length - this.powered.size;
+    this.hud.objective(left ? `Find the substation ⚡ · ${this.powered.size}/${this.level.substations.length} powered` : "The exit is lit. Find it.");
   }
 
   /** How much of the whole city is back on, 0..1, for the ambient pad. */
@@ -150,11 +172,22 @@ export class RunnerScene extends Phaser.Scene {
     return passable(this.level, x, y, this.field[y * this.level.w + x], this.exitOpen);
   }
 
+  /** Why the runner can't step onto (x, y), in words, or null when there's nothing to say. */
+  private blockedReason(x: number, y: number): string | null {
+    const c = this.level.at(x, y), g = this.level.gateAt(x, y);
+    if (c === "E") return "The exit is dark. Power every substation first.";
+    if (g?.kind === "bridge") return `A bridge is here, but it only exists in ${NAMES[g.color]} light.`;
+    if (g?.kind === "door") return `A door of ${NAMES[g.color]} light blocks the way.`;
+    if (c === "~") return "The canal is too deep to cross here.";
+    return null;
+  }
+
   private tryMove(d: Vec) {
     const nx = this.pos.x + d.x, ny = this.pos.y + d.y;
     if (!this.canEnter(nx, ny)) {
       this.target = null;
-      if (nx === this.level.exit.x && ny === this.level.exit.y) this.hud.toast("The exit is dark. Power every substation first.");
+      const why = this.blockedReason(nx, ny);
+      if (why) this.hud.toast(why);
       this.moving = true;
       this.tweens.add({ targets: this.runner, x: this.runner.x + d.x * 4, y: this.runner.y + d.y * 4, duration: 60, yoyo: true, onComplete: () => (this.moving = false) });
       return;
@@ -170,11 +203,25 @@ export class RunnerScene extends Phaser.Scene {
     });
   }
 
+  private setLantern(c: ColorMask) {
+    if (c === this.lantern) return;
+    this.lantern = c;
+    this.refreshField();
+    this.net.send({ t: "lantern", c });
+  }
+
   private arrived() {
+    const f = this.level.filterAt(this.pos.x, this.pos.y);
+    if (f && f.color !== this.lantern) {
+      this.setLantern(f.color);
+      sfx.lightOn();
+      this.cameras.main.flash(220, ...rgb(f.color));
+      this.hud.toast(`Your lantern is ${NAMES[f.color]} now.`);
+    }
     const s = this.level.substations.find((s) => s.x === this.pos.x && s.y === this.pos.y);
     if (s && !this.powered.has(s.id)) {
       this.powered.add(s.id);
-      this.checkpoint = { ...this.pos };
+      this.checkpoint = { pos: { ...this.pos }, lantern: this.lantern };
       this.map!.setPowered(s.id);
       this.net.send({ t: "substation", id: s.id });
       sfx.substation();
@@ -185,6 +232,7 @@ export class RunnerScene extends Phaser.Scene {
         this.time.delayedCall(900, () => sfx.exitOpen());
         this.hud.toast("Block restored. The exit is open.");
       } else this.hud.toast("Block restored. Your Guide has more power.");
+      this.updateObjective();
     }
     if (this.pos.x === this.level.exit.x && this.pos.y === this.level.exit.y && this.exitOpen) this.nextDistrict();
   }
@@ -193,12 +241,14 @@ export class RunnerScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     const next = this.di + 1;
-    this.cameras.main.fadeOut(450, 11, 16, 32);
+    this.hud.card(`District ${this.di + 1} restored`, next < LEVELS.length ? `Next: ${LEVELS[next].name}` : "The city is coming back");
+    this.time.delayedCall(1100, () => this.cameras.main.fadeOut(450, 11, 16, 32));
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.transitioning = false;
       if (next >= LEVELS.length) {
-        this.net.send({ t: "ending" });
-        this.scene.start("ending", { ...this.data_, role: "runner", district: this.di });
+        const stats: RunStats = { ms: Math.round(this.time.now - this.runStart), caught: this.caught };
+        this.net.send({ t: "ending", ...stats });
+        this.scene.start("ending", { ...this.data_, role: "runner", district: this.di, stats });
         return;
       }
       this.net.send({ t: "district", index: next });
@@ -212,7 +262,9 @@ export class RunnerScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.runner);
     this.moving = false;
     this.target = null;
-    this.pos = { ...this.checkpoint };
+    this.caught++;
+    this.pos = { ...this.checkpoint.pos };
+    this.setLantern(this.checkpoint.lantern);
     this.runner.setPosition(this.pos.x * TILE + TILE / 2, this.pos.y * TILE + TILE / 2);
     this.refreshField();
     this.net.send({ t: "runner_move", p: this.pos });
@@ -223,10 +275,21 @@ export class RunnerScene extends Phaser.Scene {
     this.hud.toast(reason);
   }
 
+  /** Flash the lantern so the Guide's cameras catch the Runner for a moment, wherever they are. */
+  private flare() {
+    if (this.transitioning) return;
+    if (this.time.now - this.lastFlare < FLARE_COOLDOWN) { this.hud.toast("Flare recharging…", 900); return; }
+    this.lastFlare = this.time.now;
+    this.net.send({ t: "flare", p: this.pos });
+    sfx.ping();
+    const ring = this.add.image(this.runner.x, this.runner.y, "ping").setDepth(30).setScale(0.3).setTint(0xffd38a).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: ring, scale: 2.2, alpha: 0, duration: 700, ease: "Quad.easeOut", onComplete: () => ring.destroy() });
+  }
+
   private sendSnapshot() {
     this.net.send({
       t: "snapshot",
-      s: { district: this.di, runner: this.pos, lightsOn: [...this.lightsOn], substationsPowered: [...this.powered], drones: this.drones.map((d) => ({ id: d.def.id, p: d.tile })), lantern: this.level.lantern },
+      s: { district: this.di, runner: this.pos, lightsOn: [...this.lightsOn], substationsPowered: [...this.powered], drones: this.drones.map((d) => ({ id: d.def.id, p: d.tile })), lantern: this.lantern },
     });
   }
 
@@ -301,6 +364,8 @@ export class RunnerScene extends Phaser.Scene {
       this.lastDroneSend = time;
       this.net.send({ t: "drones", d: this.drones.map((d) => ({ id: d.def.id, p: d.tile })) });
     }
+    // Filters show only where light reaches, like everything else in the dark.
+    this.level.filters.forEach((f, i) => this.filterImgs[i].setVisible(this.field[f.y * this.level.w + f.x] !== 0));
 
     if (!this.moving) {
       const d = this.queued.shift() ?? this.held.at(-1) ?? (this.target ? this.stepToward(this.target) : null);
@@ -308,8 +373,10 @@ export class RunnerScene extends Phaser.Scene {
     }
 
     const glow = this.level.substations.filter((s) => this.powered.has(s.id)).map((s) => s.block);
-    const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn);
+    const lit = sources(this.level, { x: rx, y: ry }, this.lightsOn, this.lantern);
     lit[0].radius = LANTERN_RADIUS;
     this.lightLayer!.draw(lit, glow);
   }
 }
+
+const rgb = (c: ColorMask): [number, number, number] => [c & 4 ? 255 : 77, c & 2 ? 255 : 77, c & 1 ? 255 : 94];

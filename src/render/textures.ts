@@ -113,6 +113,14 @@ export function makeTextures(scene: Phaser.Scene) {
       g.fillStyle(col).fillCircle(C, C, 3);
       g.lineStyle(2, 0x9aa3c8).lineBetween(4, 4, 10, 10).lineBetween(T - 4, 4, T - 10, 10).lineBetween(4, T - 4, 10, T - 10).lineBetween(T - 4, T - 4, T - 10, T - 10);
     });
+    // Lantern filter: a pane of colored glass on the street, with the color's stripe pattern.
+    tex(`filter-${c}`, T, T, () => {
+      g.fillStyle(0x000000, 0.35).fillEllipse(C, C + 9, 22, 6);
+      g.fillStyle(col, 0.35).fillRoundedRect(7, 6, T - 14, T - 12, 3);
+      pattern(g, c, 9, 8, T - 9, T - 8, pale);
+      g.lineStyle(2, col, 1).strokeRoundedRect(7, 6, T - 14, T - 12, 3);
+      g.lineStyle(1, 0xffffff, 0.8).lineBetween(10, 9, 15, 9);
+    });
   }
   g.destroy();
 }
