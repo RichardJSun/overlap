@@ -9,7 +9,7 @@ import { LightLayer } from "../render/lights.ts";
 import { MapView } from "../render/map.ts";
 import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
-import { hex, NAMES, type ColorMask } from "../shared/color.ts";
+import { hex, type ColorMask } from "../shared/color.ts";
 import { budgetFor, droneVisible, lanternRadius, onCamera, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Snapshot, Vec } from "../shared/protocol.ts";
@@ -166,7 +166,7 @@ export class GuideScene extends Phaser.Scene {
     this.hud.budget(this.lightsOn.size, this.budget);
     for (const [id, tag] of this.camTags) tag.setVisible(this.lightsOn.has(id));
     const left = this.level.substations.length - this.powered.size;
-    this.hud.objective(`${left ? `Substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Exit open"} · lantern ${NAMES[this.lantern]}`, !left);
+    this.hud.objective(`${left ? `Substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Exit open"}`, !left);
   }
 
   private tap(p: Phaser.Input.Pointer, danger = false) {
