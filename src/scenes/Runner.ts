@@ -153,8 +153,9 @@ export class RunnerScene extends Phaser.Scene {
     this.moving = false;
     this.refreshField();
     this.fit();
-    this.hud.district(i, this.level.name, this.level.intro);
+    this.hud.district(i, this.level.name, this.level.intro, this.level.introLabel);
     this.updateObjective();
+    if (this.level.intro) sfx.radio();
     this.coach = { moved: 0, flared: false, pinged: false, bridgeOpen: false };
     this.tutor.setDistrict(i);
     if (this.awake) sfx.ambient(this.progress);
@@ -250,7 +251,7 @@ export class RunnerScene extends Phaser.Scene {
     if (this.transitioning) return;
     this.transitioning = true;
     const next = this.di + 1;
-    this.hud.card(`District ${this.di + 1} restored`, this.level.restored ?? (next < LEVELS.length ? `Next: ${LEVELS[next].name}` : "The city is coming back"));
+    this.hud.card("Power restored", this.level.restored ?? this.level.name);
     this.time.delayedCall(1100, () => this.cameras.main.fadeOut(450, 11, 16, 32));
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.transitioning = false;

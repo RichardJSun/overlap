@@ -6,6 +6,7 @@ const CSS = `
 .cr-text{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cr h2{margin:0;font:700 clamp(28px,3.2vw,40px)/.9 var(--din);font-stretch:condensed;letter-spacing:.01em;text-transform:uppercase;color:#ffd38a;padding-top:.08em}
 .cr-tapes{display:flex;flex-wrap:wrap;gap:6px}
+.cr-log{margin:0;color:#a9b1d6}
 .cr-tape{display:inline-flex;align-items:center;height:24px;padding:2px 9px 0;box-sizing:border-box;border-radius:2px;background:#1b2238;
   box-shadow:inset 0 1px 0 rgba(232,236,255,.09),0 1px 2px rgba(0,0,0,.5);font:700 15px/1 var(--din);font-stretch:condensed;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
 .cr-tape.wm{color:#ffd38a}
@@ -30,6 +31,7 @@ export function showCredits(pane: HTMLElement, onAgain: () => void, stats?: { ms
   const text = document.createElement("div");
   text.className = "cr-text";
   const head = Object.assign(document.createElement("h2"), { textContent: "The city is back on." });
+  const log = Object.assign(document.createElement("p"), { className: "cr-log", textContent: "22:11 · Every streetlight in the city is white again." });
   const tapes = Object.assign(document.createElement("div"), { className: "cr-tapes" });
   const tape = (t: string, cls = "") => Object.assign(document.createElement("span"), { className: `cr-tape ${cls}`, textContent: t });
   tapes.append(tape("Overlap", "wm"), tape("Made at WolfJam 2026"), tape("Richard Sun"));
@@ -37,11 +39,11 @@ export function showCredits(pane: HTMLElement, onAgain: () => void, stats?: { ms
     const s = Math.round(stats.ms / 1000);
     tapes.append(tape(`Time ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`), tape(stats.caught === 0 ? "Never caught" : stats.caught === 1 ? "Caught once" : `Caught ${stats.caught} times`));
   }
-  text.append(head, tapes);
+  text.append(head, log, tapes);
   const again = Object.assign(document.createElement("button"), { type: "button", textContent: "Play again" });
   again.onclick = onAgain;
   el.append(text, again);
-  [head, tapes, again].forEach((n, i) => n.style.setProperty("--i", String(i)));
+  [head, log, tapes, again].forEach((n, i) => n.style.setProperty("--i", String(i)));
   pane.appendChild(el);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("on")));
   return el;

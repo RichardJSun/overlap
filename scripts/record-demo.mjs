@@ -34,7 +34,7 @@ await install(page);
 await page.evaluate(() => {
   window.__audioLog = [];
   const sfx = window.__overlap.sfx, log = window.__audioLog;
-  for (const k of ["step", "ping", "lightOn", "lightOff", "denied", "substation", "exitOpen", "respawn", "ending"]) {
+  for (const k of ["step", "ping", "lightOn", "lightOff", "denied", "substation", "exitOpen", "respawn", "ending", "radio"]) {
     const orig = sfx[k].bind(sfx);
     sfx[k] = () => { log.push({ k, at: Date.now() }); orig(); };
   }

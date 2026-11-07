@@ -71,16 +71,16 @@ export class IntroScene extends Phaser.Scene {
       layer.draw([...alive].map((p) => p.src), state.windows ? blocks : [], (k(16) << 16) | (k(8) << 8) | k(0));
     });
 
-    this.say("Canal Street, 8:40 PM.", "Every streetlight burns white, and white is every color at once.");
+    this.say("20:40 · City Power & Light", "Canal Street is running on white light. The switchboard is quiet.");
     // 1. The grid fails and the white comes apart into red, green and blue.
     this.time.delayedCall(2400, () => {
-      this.say("Then the grid failed, and the white came apart.", "");
+      this.say("20:43", "Calls from Canal Street. Every streetlight has split into red, green and blue.");
       this.tweens.add({ targets: state, spread: 1.2, duration: 1600, ease: "Cubic.easeOut" });
     });
     // 2. The separated colors die one by one, each with a stutter.
     const order = [...parts].sort((p, q) => (q.c.x + q.c.y) - (p.c.x + p.c.y) || p.src.color - q.src.color);
     order.forEach((p, i) => this.time.delayedCall(4400 + i * 120, () => {
-      if (i === 0) this.say("One color at a time, the city went dark.", "");
+      if (i === 0) this.say("20:44", "The colors are going out one at a time.");
       alive.delete(p);
       if (i % 3 === 0) sfx.lightOff();
       this.time.delayedCall(60, () => alive.add(p));
@@ -94,7 +94,7 @@ export class IntroScene extends Phaser.Scene {
       this.tweens.add({ targets: state, amb: 0, duration: 900, ease: "Quad.easeIn" });
     });
     // 3. Blackout, then play.
-    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "Put the colors back together, block by block.", true));
+    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "One field tech is out there with a lantern. Dispatch has the map and the streetlights.", true));
     this.time.delayedCall(dark + 3600, () => this.finish());
 
     const skip = () => { sfx.unlock(); this.finish(); };
@@ -103,23 +103,26 @@ export class IntroScene extends Phaser.Scene {
     this.events.once("shutdown", () => this.text?.remove());
   }
 
-  private say(title: string, sub: string, big = false) {
+  private say(stamp: string, line: string, big = false) {
     if (!this.text) {
       this.text = document.createElement("div");
-      this.text.style.cssText = "position:absolute;left:0;right:0;bottom:12%;text-align:center;pointer-events:none;color:#e8ecff;text-shadow:0 2px 12px #000;transition:opacity .5s";
+      this.text.style.cssText = "position:absolute;left:0;right:0;bottom:12%;padding:0 20px;text-align:center;pointer-events:none;color:#e8ecff;text-shadow:0 2px 12px #000";
       this.game.canvas.parentElement!.appendChild(this.text);
       const hint = document.createElement("div");
       hint.textContent = "Press any key to skip";
       hint.style.cssText = "position:absolute;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#7d87b2;pointer-events:none";
-      this.text.appendChild(hint);
+      this.game.canvas.parentElement!.appendChild(hint);
+      this.events.once("shutdown", () => hint.remove());
     }
-    const el = this.text;
-    el.querySelectorAll(".line").forEach((n) => n.remove());
-    const line = (t: string, css: string) => { const d = document.createElement("div"); d.className = "line"; d.textContent = t; d.style.cssText = css; el.insertBefore(d, el.lastChild); };
-    line(title, big
-      ? `font:700 clamp(44px,8vw,96px)/1 "DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:.12em;color:#ffd38a`
-      : `font:700 clamp(20px,2.6vw,30px)/1.15 "DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase`);
-    if (sub) line(sub, "margin-top:10px;font:15px/1.4 system-ui,sans-serif;color:#a9b1d6");
+    const din = `"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",system-ui,sans-serif`;
+    const top = document.createElement("div"), body = document.createElement("div");
+    top.textContent = stamp;
+    body.textContent = line;
+    top.style.cssText = big
+      ? `font:700 clamp(44px,8vw,96px)/1 ${din};letter-spacing:.12em;color:#ffd38a`
+      : `display:inline-block;padding:3px 8px 1px;background:#1b2238;font:700 14px/1.2 ${din};letter-spacing:.14em;text-transform:uppercase;color:#ffd38a`;
+    body.style.cssText = big ? "margin-top:12px;font:16px/1.4 system-ui,sans-serif;color:#a9b1d6" : "margin-top:10px;font:500 clamp(16px,1.6vw,20px)/1.4 system-ui,sans-serif";
+    this.text.replaceChildren(top, body);
   }
 
   private finish() {

@@ -1,6 +1,8 @@
 {
   "name": "Canal Street",
-  "intro": "The canal bridge only exists in magenta light. Red lantern + blue streetlight.",
+  "introLabel": "Call · Canal Street",
+  "intro": "There's a bridge over the canal, but it only shows up when the light turns purple.",
+  "restored": "21:06 · Canal Street restored. 214 homes back on.",
   "lantern": 4,
   "budget": 1,
   "budgetPerSubstation": 1,
@@ -22,8 +24,35 @@
     "#...........~..........#",
     "########################"
   ],
-  "lights": [{ "id": "L1", "x": 11, "y": 6, "color": 1, "radius": 3 }],
-  "gates": [{ "x": 12, "y": 8, "kind": "bridge", "color": 5 }],
-  "substations": [{ "id": "S1", "x": 17, "y": 3, "block": { "x": 13, "y": 1, "w": 10, "h": 6 } }],
+  "lights": [
+    {
+      "id": "L1",
+      "x": 11,
+      "y": 6,
+      "color": 1,
+      "radius": 3
+    }
+  ],
+  "gates": [
+    {
+      "x": 12,
+      "y": 8,
+      "kind": "bridge",
+      "color": 5
+    }
+  ],
+  "substations": [
+    {
+      "id": "S1",
+      "x": 17,
+      "y": 3,
+      "block": {
+        "x": 13,
+        "y": 1,
+        "w": 10,
+        "h": 6
+      }
+    }
+  ],
   "drones": []
 }

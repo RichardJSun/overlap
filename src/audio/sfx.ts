@@ -1,7 +1,7 @@
 // Procedural WebAudio: every sound is synthesized, nothing is loaded.
 // Graph: {sfx, ambient, drone} buses -> master (mute) -> limiter -> destination.
 
-export type Kind = "step" | "ping" | "lightOn" | "lightOff" | "denied" | "substation" | "exitOpen" | "respawn" | "ending";
+export type Kind = "step" | "ping" | "lightOn" | "lightOff" | "denied" | "substation" | "exitOpen" | "respawn" | "ending" | "radio";
 
 const KEY = "overlap.muted";
 const FLOOR = 1e-4; // exponential ramps cannot reach 0
@@ -175,6 +175,14 @@ const SOUNDS: Record<Kind, (v: Voice, out: AudioNode, t: number) => void> = {
     const o = v.osc(bp, "sawtooth", 1400, t, end + 0.02);
     for (let i = 0; i < 13; i++) o.frequency.setValueAtTime(1400 * 0.8 ** i * (0.8 + Math.random() * 0.4), t + i * 0.03);
     v.osc(v.gain(g, 0.35), "square", 220, t, end + 0.02).frequency.exponentialRampToValueAtTime(40, end);
+  },
+
+  radio(v, out, t) {
+    const g = v.gain(out);
+    v.env(g.gain, t, 0.005, 0.16, 0.12, 0.1);
+    v.noise(v.filter(g, "bandpass", 1900, 1.1), t, 0.3, 1.3);
+    v.tone(out, "sine", 1250, t + 0.03, 0.003, 0.1, 0.05);
+    v.tone(out, "sine", 1650, t + 0.11, 0.003, 0.09, 0.06);
   },
 
   ending(v, out, t) {
@@ -362,6 +370,7 @@ export const sfx = {
     setAmbient(brightness);
   },
   ending(): void { fire("ending"); },
+  radio(): void { fire("radio"); },
   muted: loadMuted(),
   setMuted(m: boolean): void {
     sfx.muted = m;

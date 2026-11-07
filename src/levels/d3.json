@@ -1,6 +1,8 @@
 {
   "name": "Old Locks",
-  "intro": "Every streetlight here is green. Blue glass raises the bridge, red glass opens locks.",
+  "introLabel": "Call · Old Locks",
+  "intro": "Only the green lamps work by the locks, and the bridge needs two of them on at once.",
+  "restored": "21:37 · Old Locks restored. The boats are moving again.",
   "lantern": 4,
   "budget": 2,
   "budgetPerSubstation": 0,
@@ -23,32 +25,159 @@
     "########################"
   ],
   "lights": [
-    { "id": "G1", "x": 4, "y": 7, "color": 2, "radius": 3 },
-    { "id": "G2", "x": 7, "y": 4, "color": 2, "radius": 3 },
-    { "id": "G3", "x": 13, "y": 4, "color": 2, "radius": 3 },
-    { "id": "G4", "x": 18, "y": 7, "color": 2, "radius": 3 },
-    { "id": "G5", "x": 13, "y": 11, "color": 2, "radius": 5 },
-    { "id": "G6", "x": 16, "y": 1, "color": 2, "radius": 3 }
+    {
+      "id": "G1",
+      "x": 4,
+      "y": 7,
+      "color": 2,
+      "radius": 3
+    },
+    {
+      "id": "G2",
+      "x": 7,
+      "y": 4,
+      "color": 2,
+      "radius": 3
+    },
+    {
+      "id": "G3",
+      "x": 13,
+      "y": 4,
+      "color": 2,
+      "radius": 3
+    },
+    {
+      "id": "G4",
+      "x": 18,
+      "y": 7,
+      "color": 2,
+      "radius": 3
+    },
+    {
+      "id": "G5",
+      "x": 13,
+      "y": 11,
+      "color": 2,
+      "radius": 5
+    },
+    {
+      "id": "G6",
+      "x": 16,
+      "y": 1,
+      "color": 2,
+      "radius": 3
+    }
   ],
   "gates": [
-    { "x": 4, "y": 9, "kind": "door", "color": 6 },
-    { "x": 8, "y": 4, "kind": "bridge", "color": 3 },
-    { "x": 9, "y": 4, "kind": "bridge", "color": 3 },
-    { "x": 10, "y": 4, "kind": "bridge", "color": 3 },
-    { "x": 11, "y": 4, "kind": "bridge", "color": 3 },
-    { "x": 12, "y": 4, "kind": "bridge", "color": 3 },
-    { "x": 18, "y": 8, "kind": "door", "color": 6 }
+    {
+      "x": 4,
+      "y": 9,
+      "kind": "door",
+      "color": 6
+    },
+    {
+      "x": 8,
+      "y": 4,
+      "kind": "bridge",
+      "color": 3
+    },
+    {
+      "x": 9,
+      "y": 4,
+      "kind": "bridge",
+      "color": 3
+    },
+    {
+      "x": 10,
+      "y": 4,
+      "kind": "bridge",
+      "color": 3
+    },
+    {
+      "x": 11,
+      "y": 4,
+      "kind": "bridge",
+      "color": 3
+    },
+    {
+      "x": 12,
+      "y": 4,
+      "kind": "bridge",
+      "color": 3
+    },
+    {
+      "x": 18,
+      "y": 8,
+      "kind": "door",
+      "color": 6
+    }
   ],
   "filters": [
-    { "x": 1, "y": 2, "color": 1 },
-    { "x": 22, "y": 2, "color": 4 }
+    {
+      "x": 1,
+      "y": 2,
+      "color": 1
+    },
+    {
+      "x": 22,
+      "y": 2,
+      "color": 4
+    }
   ],
   "substations": [
-    { "id": "S1", "x": 14, "y": 2, "block": { "x": 13, "y": 1, "w": 3, "h": 4 } },
-    { "id": "S2", "x": 18, "y": 9, "block": { "x": 13, "y": 9, "w": 10, "h": 6 } }
+    {
+      "id": "S1",
+      "x": 14,
+      "y": 2,
+      "block": {
+        "x": 13,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      }
+    },
+    {
+      "id": "S2",
+      "x": 18,
+      "y": 9,
+      "block": {
+        "x": 13,
+        "y": 9,
+        "w": 10,
+        "h": 6
+      }
+    }
   ],
   "drones": [
-    { "id": "D1", "color": 1, "speed": 1.4, "path": [{ "x": 18, "y": 1 }, { "x": 18, "y": 3 }] },
-    { "id": "D2", "color": 2, "speed": 1.5, "path": [{ "x": 14, "y": 11 }, { "x": 22, "y": 11 }] }
+    {
+      "id": "D1",
+      "color": 1,
+      "speed": 1.4,
+      "path": [
+        {
+          "x": 18,
+          "y": 1
+        },
+        {
+          "x": 18,
+          "y": 3
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "color": 2,
+      "speed": 1.5,
+      "path": [
+        {
+          "x": 14,
+          "y": 11
+        },
+        {
+          "x": 22,
+          "y": 11
+        }
+      ]
+    }
   ]
 }

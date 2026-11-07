@@ -34,6 +34,8 @@ const CSS = `
   background:rgba(11,16,32,.9);border:1px solid var(--edge);font-size:13px;line-height:1.45;text-align:center;color:var(--ink);
   transform:translate(-50%,0);transition:opacity .6s ease,transform .6s var(--ease)}
 .hud .intro.off{opacity:0;transform:translate(-50%,-6px)}
+.hud .intro{display:flex;gap:10px;align-items:flex-start;text-align:left}
+.hud .intro .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber);white-space:nowrap}
 .hud .toast{position:absolute;left:50%;bottom:22px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:9px 14px;
   background:rgba(11,16,32,.92);border:1px solid var(--edge);color:var(--ink);text-align:center;line-height:1.4;
   opacity:0;transform:translate(-50%,6px);transition:opacity .2s ease,transform .2s var(--ease)}
@@ -97,7 +99,7 @@ export class Hud {
     this.el.className = `hud ${role}${local ? " local" : ""}`;
     this.el.innerHTML = `
       <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
-      <div class="intro off"></div><div class="coach off" role="status"><span class="lbl"></span><span class="say"></span></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
+      <div class="intro off"><span class="lbl"></span><span class="say"></span></div><div class="coach off" role="status"><span class="lbl"></span><span class="say"></span></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
       ${role === "guide" ? `<div class="bottom"><div class="deck"><span class="lbl">Lights</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
@@ -111,11 +113,12 @@ export class Hud {
     pane.appendChild(this.el);
   }
 
-  district(index: number, name: string, intro?: string) {
+  district(index: number, name: string, intro?: string, label = "Radio") {
     this.q(".num").textContent = String(index + 1).padStart(2, "0");
     this.q(".name").textContent = name;
     const el = this.q(".intro");
-    el.textContent = intro ?? "";
+    el.querySelector(".lbl")!.textContent = label;
+    el.querySelector(".say")!.textContent = intro ?? "";
     el.classList.toggle("off", !intro);
     clearTimeout(this.introTimer);
     this.introTimer = window.setTimeout(() => el.classList.add("off"), 9000);
