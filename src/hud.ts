@@ -2,25 +2,68 @@ import { sfx } from "./audio/sfx.ts";
 import type { NetStatus } from "./net/transport.ts";
 import type { Role } from "./shared/protocol.ts";
 
+// Heights are load-bearing: src/scenes/fit.ts reserves 44px on top and the Guide reserves 64px below.
 const CSS = `
-.hud{position:absolute;inset:0;pointer-events:none;font:13px/1.35 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#e8ecff}
-.hud .top{position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;background:linear-gradient(#0b1020ee,#0b102000)}
-.hud .name{font-weight:700;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.hud .role{opacity:.6;text-transform:uppercase;letter-spacing:.12em;font-size:11px}
+.hud{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--street:#141a2e;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;
+  --tape:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--ease:cubic-bezier(.23,1,.32,1);
+  position:absolute;inset:0;pointer-events:none;container-type:inline-size;font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+.hud .top{position:absolute;left:0;right:0;top:0;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 0 0 12px;
+  background:linear-gradient(var(--night) 0,rgba(11,16,32,.82) 60%,rgba(11,16,32,0))}
+.hud.runner .top{opacity:.78}
+.hud .role{font:700 11px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.hud .tape{display:inline-flex;align-items:center;gap:8px;min-width:0;height:24px;padding:0 9px;border-radius:2px;background:var(--wall);
+  box-shadow:inset 0 1px 0 rgba(232,236,255,.09),0 1px 2px rgba(0,0,0,.5);font:700 15px/1 var(--tape);font-stretch:condensed;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.hud .tape b{font:600 11px/1 var(--mono);letter-spacing:0;color:var(--faint)}
+.hud .name{overflow:hidden;text-overflow:ellipsis;padding-top:2px}
 .hud .sp{flex:1}
-.hud .net{font-size:11px;padding:3px 8px;border:1px solid #2c3758;border-radius:999px;white-space:nowrap}
-.hud .net.ok{border-color:#4dff8866;color:#4dff88}.hud .net.wait{color:#ffd38a;border-color:#ffd38a66}.hud .net.bad{color:#ff4d5e;border-color:#ff4d5e66}
-.hud button{pointer-events:auto;font:inherit;color:#e8ecff;background:#141a2e;border:1px solid #2c3758;border-radius:6px;padding:4px 8px;cursor:pointer}
-.hud .intro{position:absolute;left:50%;top:52px;transform:translateX(-50%);max-width:min(92%,640px);text-align:center;padding:8px 14px;background:#0b1020cc;border:1px solid #2c3758;border-radius:8px;transition:opacity .6s}
-.hud .toast{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:8px 14px;background:#141a2eee;border:1px solid #ffd38a88;color:#ffd38a;border-radius:8px;opacity:0;transition:opacity .3s;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
-.hud .toast.show{opacity:1}
-.hud .bottom{position:absolute;left:0;right:0;bottom:0;min-height:56px;display:flex;align-items:center;gap:14px;padding:8px 12px;background:linear-gradient(#0b102000,#0b1020ee)}
-.hud .bars{display:flex;gap:4px}.hud .bar{width:14px;height:22px;border:1px solid #4dff8899;border-radius:2px}.hud .bar.on{background:#4dff88;box-shadow:0 0 8px #4dff88}
-.hud .bars.flash .bar{border-color:#ff4d5e;animation:hudflash .4s 2}
-@keyframes hudflash{50%{background:#ff4d5e55}}
-.hud .clock{font-variant-numeric:tabular-nums;color:#4dff88;opacity:.85}
-.hud .hint{opacity:.7;font-size:12px}
+.hud .room{font:600 12px/1 var(--mono);color:var(--faint);white-space:nowrap}
+.hud .room em{font-style:normal;color:var(--dim);letter-spacing:.12em}
+.hud .net{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);white-space:nowrap}
+.hud .net::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber);transition:background-color .2s}
+.hud .net.ok::before{background:var(--green)}.hud .net.bad::before{background:var(--red)}.hud .net.bad{color:var(--ink)}
+.hud .net.wait::before{animation:hud-breathe 1.4s ease-in-out infinite alternate}
+@keyframes hud-breathe{to{opacity:.3}}
+.hud .mute{pointer-events:auto;flex:none;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--dim);cursor:pointer;touch-action:manipulation;transition:color .15s,transform .12s var(--ease)}
+.hud .mute svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:square}
+.hud .mute .x{display:none}.hud .mute[aria-pressed=true] .x{display:inline}.hud .mute[aria-pressed=true] .w{display:none}
+.hud .mute:active{transform:scale(.92)}
+.hud .mute:focus-visible{outline:2px solid var(--amber);outline-offset:-6px;color:var(--ink)}
+@media (hover:hover){.hud .mute:hover{color:var(--ink)}}
+.hud .intro{position:absolute;left:50%;top:52px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),560px);padding:9px 14px;
+  background:rgba(11,16,32,.9);border:1px solid var(--edge);font-size:13px;line-height:1.45;text-align:center;color:var(--ink);
+  transform:translate(-50%,0);transition:opacity .6s ease,transform .6s var(--ease)}
+.hud .intro.off{opacity:0;transform:translate(-50%,-6px)}
+.hud .toast{position:absolute;left:50%;bottom:22px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:9px 14px;
+  background:rgba(11,16,32,.92);border:1px solid var(--edge);color:var(--ink);text-align:center;line-height:1.4;
+  opacity:0;transform:translate(-50%,6px);transition:opacity .2s ease,transform .2s var(--ease)}
+.hud .toast.show{opacity:1;transform:translate(-50%,0)}
+.hud.guide .toast{bottom:76px}
+.hud .bottom{position:absolute;left:0;right:0;bottom:0;height:64px;box-sizing:border-box;padding:6px 12px;display:grid;grid-template-rows:auto 1fr;gap:4px;
+  background:var(--night);border-top:1px solid var(--edge)}
+.hud .hint{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:11px;line-height:12px;color:var(--faint);text-wrap:balance}
+.hud .deck{display:flex;align-items:center;gap:10px;min-width:0}
+.hud .lbl{font:700 12px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding-top:2px}
+.hud .bars{display:flex;gap:4px}
+.hud .bar{position:relative;width:16px;height:22px;box-sizing:border-box;background:var(--wall);border:1px solid var(--edge);transition:background-color .16s,border-color .16s}
+.hud .bar::after{content:"";position:absolute;left:3px;right:3px;height:6px;bottom:3px;background:var(--edge);transition:transform .16s var(--ease),background-color .16s}
+.hud .bar.on{background:rgba(255,211,138,.16);border-color:var(--amber)}
+.hud .bar.on::after{background:var(--amber);transform:translateY(-8px)}
+.hud .bars.flash .bar{animation:hud-deny .2s steps(1) 4}
+@keyframes hud-deny{50%{border-color:var(--red);background:rgba(255,77,94,.3)}}
+.hud .count{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber)}
+.hud .ping{display:flex;align-items:center;gap:8px}
+.hud .meter{width:56px;height:6px;background:var(--wall);border:1px solid var(--edge);overflow:hidden}
+.hud .meter i{display:block;height:100%;background:var(--ink);transform-origin:left;transition:transform .16s var(--ease)}
+.hud .ping.charging .lbl{color:var(--faint)}
+.hud .ping.charging .meter i{background:var(--faint)}
+.hud .clock{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber);min-width:5ch;text-align:right}
+@container (max-width:479px){.hud .role,.hud .room{display:none}}
+@container (max-width:339px){.hud .net{font-size:0;gap:0}}
+@media (prefers-reduced-motion:reduce){.hud *,.hud *::before,.hud *::after{animation:none!important;transition-property:opacity,background-color,border-color,color!important}}
 `;
+
+const SPEAKER = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`;
 
 /** DOM overlay for one pane: district title, connection state, toasts, and role-specific controls. */
 export class Hud {
@@ -34,27 +77,31 @@ export class Hud {
       const s = document.createElement("style"); s.id = "hud-css"; s.textContent = CSS; document.head.appendChild(s);
     }
     this.el = document.createElement("div");
-    this.el.className = "hud";
+    this.el.className = `hud ${role}`;
     this.el.innerHTML = `
-      <div class="top"><span class="role"></span><span class="name"></span><span class="sp"></span><span class="room role"></span><span class="net wait">…</span><button class="mute" aria-label="Toggle sound"></button></div>
-      <div class="intro"></div><div class="toast"></div>
-      ${role === "guide" ? `<div class="bottom"><span class="role">Power</span><span class="bars"></span><span class="sp"></span><span class="hint"></span><span class="clock"></span></div>` : ""}`;
+      <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
+      <div class="intro off"></div><div class="toast" role="status"></div>
+      ${role === "guide" ? `<div class="bottom"><div class="hint"></div><div class="deck"><span class="lbl">Power</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
-    this.q(".room").textContent = room ? `Room ${room}` : "";
+    if (room) {
+      const r = this.q(".room");
+      r.append("Room ", Object.assign(document.createElement("em"), { textContent: room }));
+    }
     const mute = this.q<HTMLButtonElement>(".mute");
-    const label = () => (mute.textContent = sfx.muted ? "Sound off" : "Sound on");
+    const label = () => { mute.setAttribute("aria-pressed", String(sfx.muted)); mute.title = sfx.muted ? "Sound off" : "Sound on"; mute.setAttribute("aria-label", mute.title); };
     label();
     mute.onclick = () => { sfx.unlock(); sfx.setMuted(!sfx.muted); label(); };
     pane.appendChild(this.el);
   }
 
   district(index: number, name: string, intro?: string) {
-    this.q(".name").textContent = `${index + 1} · ${name}`;
+    this.q(".num").textContent = String(index + 1).padStart(2, "0");
+    this.q(".name").textContent = name;
     const el = this.q(".intro");
     el.textContent = intro ?? "";
-    el.style.opacity = intro ? "1" : "0";
+    el.classList.toggle("off", !intro);
     clearTimeout(this.introTimer);
-    this.introTimer = window.setTimeout(() => (el.style.opacity = "0"), 9000);
+    this.introTimer = window.setTimeout(() => el.classList.add("off"), 9000);
   }
 
   net(status: NetStatus, peer: boolean) {
@@ -78,8 +125,24 @@ export class Hud {
   budget(used: number, max: number, flash = false) {
     const el = this.q(".bars");
     if (!el) return;
-    el.replaceChildren(...Array.from({ length: max }, (_, i) => { const b = document.createElement("span"); b.className = "bar" + (i < used ? " on" : ""); return b; }));
+    if (el.childElementCount !== max)
+      el.replaceChildren(...Array.from({ length: max }, () => Object.assign(document.createElement("span"), { className: "bar" })));
+    [...el.children].forEach((b, i) => b.classList.toggle("on", i < used));
+    this.q(".count").textContent = `${used}/${max}`;
     if (flash) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+  }
+
+  /** Empties the Guide's ping meter and refills it over the cooldown. Call right after a ping is sent. */
+  ping(cooldownMs: number) {
+    const box = this.q(".ping"), bar = this.q(".meter i");
+    if (!box) return;
+    box.classList.add("charging");
+    bar.style.transition = "none";
+    bar.style.transform = "scaleX(0)";
+    void bar.offsetWidth;
+    bar.style.transition = `transform ${cooldownMs}ms linear`;
+    bar.style.transform = "";
+    window.setTimeout(() => box.classList.remove("charging"), cooldownMs);
   }
 
   hint(text: string) { const el = this.q(".hint"); if (el) el.textContent = text; }
