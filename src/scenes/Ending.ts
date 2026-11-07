@@ -3,6 +3,7 @@ import { sfx } from "../audio/sfx.ts";
 import type { SceneData } from "../game.ts";
 import { LEVELS } from "../levels/index.ts";
 import { MapView } from "../render/map.ts";
+import { addPost } from "../render/post.ts";
 import { makeTextures, PAL } from "../render/textures.ts";
 import { TILE } from "../shared/level.ts";
 import type { Role } from "../shared/protocol.ts";
@@ -19,6 +20,7 @@ export class EndingScene extends Phaser.Scene {
 
   create() {
     makeTextures(this);
+    addPost(this, "ending");
     const level = LEVELS[Math.min(this.info.district, LEVELS.length - 1)];
     const map = new MapView(this, level, { glyphs: false });
     level.lights.forEach((l) => map.setLamp(l.id, true));

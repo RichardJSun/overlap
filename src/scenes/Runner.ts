@@ -6,6 +6,7 @@ import { LEVELS } from "../levels/index.ts";
 import type { NetStatus, Transport } from "../net/transport.ts";
 import { LightLayer } from "../render/lights.ts";
 import { MapView } from "../render/map.ts";
+import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
 import { reveals } from "../shared/color.ts";
 import { dronePos, droneVisible, LANTERN_RADIUS, passable, sources, TILE, type Level } from "../shared/level.ts";
@@ -62,6 +63,7 @@ export class RunnerScene extends Phaser.Scene {
 
   create() {
     makeTextures(this);
+    addPost(this, "runner");
     this.hud = new Hud(this.game.canvas.parentElement!, "runner", this.data_.room);
     this.events.once("shutdown", () => this.hud.destroy());
     const kb = this.input.keyboard!;
@@ -107,7 +109,7 @@ export class RunnerScene extends Phaser.Scene {
     this.drones.forEach((d) => d.img.destroy());
     this.lightsOn.clear();
     this.powered.clear();
-    this.map = new MapView(this, this.level, { glyphs: false }).setDepth(0);
+    this.map = new MapView(this, this.level, { glyphs: true }).setDepth(0);
     this.lightLayer = new LightLayer(this, this.level);
     this.lightLayer.setDepth(10);
     this.drones = this.level.drones.map((def) => ({ def, img: this.add.image(0, 0, `drone-${def.color}`).setDepth(15).setVisible(false), tile: { ...def.path[0] } }));

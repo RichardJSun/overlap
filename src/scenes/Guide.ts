@@ -6,6 +6,7 @@ import { LEVELS } from "../levels/index.ts";
 import type { NetStatus, Transport } from "../net/transport.ts";
 import { LightLayer } from "../render/lights.ts";
 import { MapView } from "../render/map.ts";
+import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
 import { budgetFor, droneVisible, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
@@ -42,6 +43,7 @@ export class GuideScene extends Phaser.Scene {
 
   create() {
     makeTextures(this);
+    addPost(this, "guide");
     this.hud = new Hud(this.game.canvas.parentElement!, "guide", this.data_.room);
     this.events.once("shutdown", () => this.hud.destroy());
     this.net.onMessage((m) => this.onMsg(m));
