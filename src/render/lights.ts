@@ -12,6 +12,21 @@ const ADD = Phaser.BlendModes.ADD;
 const FLICKER = [[50, 0.9], [110, 0.12], [170, 1], [230, 0.3], [300, 1]]; // [until ms, intensity]
 const GLOW_FADE = 1400;
 let uid = 0;
+const modes = new WeakMap<object, number>();
+
+/**
+ * Blend mode for the lightmap: dst * src * 2, so 0.5 leaves the art as drawn and a full light doubles it.
+ * Plain multiply could only darken, which forced the art to be pale everywhere else it is shown.
+ */
+function modulate2x(r: Phaser.Renderer.Canvas.CanvasRenderer | Phaser.Renderer.WebGL.WebGLRenderer) {
+  if (!(r instanceof Phaser.Renderer.WebGL.WebGLRenderer)) return Phaser.BlendModes.MULTIPLY;
+  let m = modes.get(r);
+  if (m === undefined) {
+    r.addBlendMode([r.gl.DST_COLOR, r.gl.SRC_COLOR], r.gl.FUNC_ADD);
+    modes.set(r, (m = r.blendModes.length - 1)); // addBlendMode's own return value is off by one in 4.2.1
+  }
+  return m;
+}
 
 /**
  * Lightmap: a render texture filled with near-black ambient, then each light added in its color.
@@ -32,9 +47,9 @@ export class LightLayer {
   private frame = -1;
   private tick = () => { if (this.last && this.animating() && this.frame !== this.scene.game.loop.frame) this.draw(this.last.sources, this.last.glow, this.last.ambient); };
 
-  constructor(private scene: Phaser.Scene, private level: Level, private ambient = 0x07080e, bloomAlpha = 0.25) {
+  constructor(private scene: Phaser.Scene, private level: Level, private ambient = 0x07080e, bloomAlpha = 0.12) {
     const w = level.w * TILE, h = level.h * TILE;
-    this.rt = scene.add.renderTexture(0, 0, w, h).setOrigin(0).setBlendMode(Phaser.BlendModes.MULTIPLY);
+    this.rt = scene.add.renderTexture(0, 0, w, h).setOrigin(0).setBlendMode(modulate2x(scene.renderer));
     this.glowG = scene.make.graphics({}, false).setBlendMode(ADD);
     this.polyG = scene.make.graphics({}, false);
     this.bloom = scene.add.image(0, 0, this.rt.texture).setOrigin(0).setBlendMode(ADD).setAlpha(bloomAlpha).setVisible(bloomAlpha > 0);
@@ -63,12 +78,13 @@ export class LightLayer {
     const g = this.glowG.clear();
     glow.forEach((b, i) => {
       const k = Math.min(1, (now - this.born.get(glowKeys[i])!) / GLOW_FADE);
-      g.fillStyle(PAL.warm, 0.2 * k).fillRect(b.x * TILE, b.y * TILE, b.w * TILE, b.h * TILE);
       for (const w of windowsIn(this.level, b)) g.fillStyle(PAL.warm, 0.85 * k).fillRect(w.x, w.y, w.w, w.h);
     });
     rt.draw(g);
     glow.forEach((b, i) => {
       const k = Math.min(1, (now - this.born.get(glowKeys[i])!) / GLOW_FADE);
+      // A soft warm wash over the block, so it has no hard rectangular edge.
+      rt.stamp("soft", undefined, (b.x + b.w / 2) * TILE, (b.y + b.h / 2) * TILE, { scaleX: (b.w * TILE * 1.5) / 64, scaleY: (b.h * TILE * 1.5) / 64, tint: PAL.warm, alpha: 0.45 * k, blendMode: ADD });
       for (const w of windowsIn(this.level, b)) rt.stamp("soft", undefined, w.x + w.w / 2, w.y + w.h + 4, { scale: 0.9, tint: PAL.warm, alpha: 0.35 * k, blendMode: ADD });
       const s = this.level.substations.find((s) => s.block === b);
       if (s) this.addPool(rt, { x: s.x, y: s.y, radius: 2, color: 0 }, PAL.warm, 0.8 * k);
