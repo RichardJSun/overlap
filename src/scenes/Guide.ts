@@ -30,6 +30,7 @@ export class GuideScene extends Phaser.Scene {
   private lightsOn = new Set<string>();
   private powered = new Set<string>();
   private lastPing = -Infinity;
+  private awake = false;
 
   private map?: MapView;
   private lightLayer?: LightLayer;
@@ -103,6 +104,7 @@ export class GuideScene extends Phaser.Scene {
 
   private tap(p: Phaser.Input.Pointer) {
     sfx.unlock();
+    if (!this.data_.local && !this.awake) { this.awake = true; sfx.ambient((this.di + this.powered.size / this.level.substations.length) / LEVELS.length); }
     const w = this.cameras.main.getWorldPoint(p.x, p.y);
     const fx = w.x / TILE, fy = w.y / TILE;
     if (fx < 0 || fy < 0 || fx >= this.level.w || fy >= this.level.h) return;
@@ -185,6 +187,7 @@ export class GuideScene extends Phaser.Scene {
         if (this.powered.size === this.level.substations.length) { this.map!.setExitOpen(true); this.hud.toast("All blocks powered. Guide them to the exit."); }
         else this.hud.toast(`Block restored. Power budget is now ${this.budget}.`);
         if (!this.data_.local) sfx.substation();
+        if (!this.data_.local && this.awake) sfx.ambient((this.di + this.powered.size / this.level.substations.length) / LEVELS.length);
         return this.redraw();
       case "district":
         this.loadDistrict(m.index);

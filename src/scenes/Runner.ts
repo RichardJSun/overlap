@@ -42,6 +42,7 @@ export class RunnerScene extends Phaser.Scene {
   private t0 = 0;
   private invulnUntil = 0;
   private transitioning = false;
+  private awake = false;
 
   private map?: MapView;
   private lightLayer?: LightLayer;
@@ -68,7 +69,7 @@ export class RunnerScene extends Phaser.Scene {
     this.events.once("shutdown", () => this.hud.destroy());
     const kb = this.input.keyboard!;
     kb.on("keydown", (e: KeyboardEvent) => {
-      sfx.unlock();
+      this.wake();
       const d = DIRS[e.code];
       if (!d) return;
       e.preventDefault();
@@ -80,7 +81,7 @@ export class RunnerScene extends Phaser.Scene {
     kb.on("keyup", (e: KeyboardEvent) => { const d = DIRS[e.code]; if (d) this.held = this.held.filter((h) => h !== d); });
     this.game.events.on(Phaser.Core.Events.BLUR, () => (this.held = []));
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
-      sfx.unlock();
+      this.wake();
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       const t = { x: Math.floor(w.x / TILE), y: Math.floor(w.y / TILE) };
       if (t.x >= 0 && t.y >= 0 && t.x < this.level.w && t.y < this.level.h) this.target = t;
@@ -100,6 +101,14 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, HUD_TOP, 8); }
+
+  /** First gesture unlocks audio (iOS rule); the ambient pad can only start after that. */
+  private wake() {
+    sfx.unlock();
+    if (this.awake) return;
+    this.awake = true;
+    sfx.ambient(this.progress);
+  }
 
   private loadDistrict(i: number) {
     this.di = i;
@@ -121,13 +130,16 @@ export class RunnerScene extends Phaser.Scene {
     this.refreshField();
     this.fit();
     this.hud.district(i, this.level.name, this.level.intro);
-    sfx.ambient(0);
+    if (this.awake) sfx.ambient(this.progress);
   }
 
   private refreshField() {
     this.field = lightField(this.level, sources(this.level, this.pos, this.lightsOn));
     for (const g of this.map!.gates) g.img.setVisible(reveals(this.field[g.y * this.level.w + g.x], g.color));
   }
+
+  /** How much of the whole city is back on, 0..1, for the ambient pad. */
+  private get progress() { return (this.di + this.powered.size / this.level.substations.length) / LEVELS.length; }
 
   private get exitOpen() { return this.powered.size === this.level.substations.length; }
 
@@ -164,7 +176,7 @@ export class RunnerScene extends Phaser.Scene {
       this.map!.setPowered(s.id);
       this.net.send({ t: "substation", id: s.id });
       sfx.substation();
-      sfx.ambient(this.powered.size / this.level.substations.length);
+      sfx.ambient(this.progress);
       this.cameras.main.flash(500, 255, 211, 138);
       if (this.exitOpen) {
         this.map!.setExitOpen(true);
