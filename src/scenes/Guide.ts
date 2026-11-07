@@ -134,6 +134,7 @@ export class GuideScene extends Phaser.Scene {
     this.fit();
     this.coach = { pinged: false, flared: false };
     this.tutor.setDistrict(i);
+    if (this.data_.local && i === 0) this.time.delayedCall(12000, () => this.hud.toast("One screen: this pane hides the Runner the way a real Guide's screen would. On two screens, you'd have to talk.", 7000));
     this.hud.district(i, this.level.name, this.level.intro, this.level.introLabel);
     this.redraw();
   }
