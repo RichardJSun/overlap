@@ -135,13 +135,16 @@ export function dronePos(d: LevelJson["drones"][number], t: number): Vec {
   return { ...d.path[0] };
 }
 
+export type Action = { move: Vec } | { toggle: string };
+export type PlanState = { pos: Vec; lightsOn: string[]; powered: string[] };
+
 /**
  * BFS over (runner tile, set of lights on, substations powered). The guide may toggle lights at any
- * time within budget. Drones are timing hazards and are not modelled. Returns the number of steps
- * (moves + toggles) in a shortest solution, or -1 when the exit is unreachable.
+ * time within budget. Drones are timing hazards and are not modelled. Returns the shortest list of
+ * actions (moves and toggles) from `from` (default: district start) to the exit, or null.
  * `maxLights` caps the budget, e.g. 0 to prove the district needs the guide.
  */
-export function solve(level: Level, opts: { maxLights?: number } = {}): number {
+export function plan(level: Level, opts: { maxLights?: number; from?: PlanState } = {}): Action[] | null {
   const { w } = level;
   const ids = level.lights.map((l) => l.id);
   const fields = ids.map((id) => level.lightFields.get(id)!);
@@ -157,20 +160,30 @@ export function solve(level: Level, opts: { maxLights?: number } = {}): number {
   const pop = (m: number) => { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; };
   const key = (pos: number, lights: number, subs: number) => (pos * (1 << ids.length) + lights) * 4 + subs;
 
-  const startPos = level.start.y * w + level.start.x;
-  const seen = new Set<number>([key(startPos, 0, 0)]);
-  let frontier: [number, number, number][] = [[startPos, 0, 0]];
-  for (let depth = 0; frontier.length; depth++) {
+  const f = opts.from;
+  const startPos = f ? f.pos.y * w + f.pos.x : level.start.y * w + level.start.x;
+  const startLights = f ? ids.reduce((m, id, i) => (f.lightsOn.includes(id) ? m | (1 << i) : m), 0) : 0;
+  const startSubs = f ? level.substations.reduce((m, s, i) => (f.powered.includes(s.id) ? m | (1 << i) : m), 0) : 0;
+  const k0 = key(startPos, startLights, startSubs);
+  const parent = new Map<number, [number, Action] | null>([[k0, null]]);
+  let frontier: [number, number, number][] = [[startPos, startLights, startSubs]];
+  const exit = level.exit.y * w + level.exit.x;
+  while (frontier.length) {
     const next: [number, number, number][] = [];
     for (const [pos, lights, subs] of frontier) {
+      const here = key(pos, lights, subs);
+      if (pos === exit) {
+        const out: Action[] = [];
+        for (let k = here, p = parent.get(k); p; k = p[0], p = parent.get(k)) out.push(p[1]);
+        return out.reverse();
+      }
       const x = pos % w, y = (pos - x) / w;
-      if (pos === level.exit.y * w + level.exit.x) return depth;
-      const push = (p: number, l: number, s: number) => { const k = key(p, l, s); if (!seen.has(k)) { seen.add(k); next.push([p, l, s]); } };
+      const push = (p: number, l: number, s: number, a: Action) => { const k = key(p, l, s); if (!parent.has(k)) { parent.set(k, [here, a]); next.push([p, l, s]); } };
       const budget = Math.min(budgetFor(level, pop(subs)), opts.maxLights ?? Infinity);
       for (let i = 0; i < ids.length; i++) {
         const bit = 1 << i;
-        if (lights & bit) push(pos, lights & ~bit, subs);
-        else if (pop(lights) < budget) push(pos, lights | bit, subs);
+        if (lights & bit) push(pos, lights & ~bit, subs, { toggle: ids[i] });
+        else if (pop(lights) < budget) push(pos, lights | bit, subs, { toggle: ids[i] });
       }
       const lf = lanternAt(x, y);
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -180,10 +193,15 @@ export function solve(level: Level, opts: { maxLights?: number } = {}): number {
         for (let i = 0; i < ids.length; i++) if (lights & (1 << i)) lit |= fields[i][ni];
         if (!passable(level, nx, ny, lit, subs === allSubs)) continue;
         const si = subIdx.get(ni);
-        push(ni, lights, si === undefined ? subs : subs | (1 << si));
+        push(ni, lights, si === undefined ? subs : subs | (1 << si), { move: { x: dx, y: dy } });
       }
     }
     frontier = next;
   }
-  return -1;
+  return null;
+}
+
+/** Length of the shortest solution, or -1 when the exit is unreachable. */
+export function solve(level: Level, opts: { maxLights?: number } = {}): number {
+  return plan(level, opts)?.length ?? -1;
 }

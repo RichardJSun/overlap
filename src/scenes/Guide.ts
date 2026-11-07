@@ -35,7 +35,7 @@ export class GuideScene extends Phaser.Scene {
   private lightLayer?: LightLayer;
   private runner!: Phaser.GameObjects.Image;
   private trail: Phaser.GameObjects.Arc[] = [];
-  private drones = new Map<string, { img: Phaser.GameObjects.Image; warn: Phaser.GameObjects.Text; color: number; tile: Vec }>();
+  private drones = new Map<string, { img: Phaser.GameObjects.Image; warn: Phaser.GameObjects.Image; color: number; tile: Vec }>();
 
   constructor() { super("guide"); }
 
@@ -76,14 +76,16 @@ export class GuideScene extends Phaser.Scene {
     this.lightLayer.rt.setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.45);
     for (const d of this.level.drones) {
       const img = this.add.image(0, 0, `drone-${d.color}`).setDepth(15);
-      const warn = this.add.text(0, 0, "unseen", { fontFamily: "monospace", fontSize: "9px", color: "#ffd38a" }).setOrigin(0.5, 1.6).setDepth(16);
+      // Pulsing amber ring = "the runner can't see this drone right now".
+      const warn = this.add.image(0, 0, "ping").setTint(0xffd38a).setScale(0.62).setDepth(16);
+      this.tweens.add({ targets: warn, alpha: { from: 0.95, to: 0.25 }, scale: { from: 0.55, to: 0.75 }, duration: 520, yoyo: true, repeat: -1 });
       this.drones.set(d.id, { img, warn, color: d.color, tile: { ...d.path[0] } });
       this.placeDrone(d.id, d.path[0], false);
     }
     this.moveRunner(this.level.start, false);
     this.fit();
     this.hud.district(i, this.level.name, this.level.intro);
-    this.hud.hint("Tap a streetlight to switch it · tap anywhere else to ping");
+    this.hud.hint(this.level.drones.length ? "Tap a lamp to switch it · tap elsewhere to ping · amber ring = drone the Runner can't see" : "Tap a streetlight to switch it · tap anywhere else to ping");
     this.redraw();
   }
 
