@@ -6,7 +6,7 @@ const CSS = `
 .post>div{position:absolute;inset:0}
 .post .grain{inset:-64px;opacity:.07;animation:post-grain .5s steps(5) infinite}
 @keyframes post-grain{0%{transform:translate(0,0)}20%{transform:translate(-23px,17px)}40%{transform:translate(31px,-9px)}60%{transform:translate(-11px,-29px)}80%{transform:translate(19px,27px)}}
-.post .scan{background:repeating-linear-gradient(#0000 0 2px,#00000038 2px 3px)}
+.post .scan{background:repeating-linear-gradient(#0000 0 3px,#00000014 3px 4px)}
 @media (prefers-reduced-motion:reduce){.post .grain{animation:none}}
 `;
 const LOOK: Record<Role | "ending", string[]> = {
@@ -16,8 +16,8 @@ const LOOK: Record<Role | "ending", string[]> = {
   ],
   guide: [
     "scan",
-    "box-shadow:inset 0 0 60px #4dff8826,inset 0 0 2px 1px #4dff8840;border-radius:10px",
-    "background:radial-gradient(ellipse 90% 85% at 50% 50%,#0000 70%,#020a06aa 100%)",
+    "box-shadow:inset 0 0 48px #4dff881a,inset 0 0 2px 1px #4dff8840;border-radius:10px",
+    "background:radial-gradient(ellipse 95% 90% at 50% 50%,#0000 78%,#020a0666 100%)",
   ],
   ending: ["background:radial-gradient(ellipse 80% 75% at 50% 45%,#0000 50%,#3a1e0866 100%)"],
 };

@@ -24,9 +24,10 @@ export function windowsIn(level: Level, b: Block): Rect[] {
 
 // Albedo: brighter than the palette, because the runner's lightmap multiplies it back down.
 const A = {
-  street: 0x4f5466, speckHi: 0x5a5f72, speckLo: 0x45495a, crack: 0x3e4253, lane: 0x8f8a6c, curb: 0x6c7186, contact: 0x3a3e4f,
-  roof: 0x5b6488, roofEdge: 0x8f9bcc, roofShade: 0x4a5274, facade: 0x3d4463, glass: 0x1a1f30, sill: 0x6a739a, foot: 0x262b3e,
-  unit: 0x6f789c, dark: 0x353b56, water: 0x1c2440, ripple: 0x34426c, sparkle: 0x5a6aa0, bank: 0x6c7186, joint: 0x4a4e60,
+  // Streets are the lightest, warmest thing on the map; roofs are dark with a crisp lit outline; water is blue.
+  street: 0x626160, speckHi: 0x6e6c6a, speckLo: 0x575654, crack: 0x4a4947, lane: 0xc9b277, curb: 0x938d82, contact: 0x46433f,
+  roof: 0x252c48, roofEdge: 0x9aa7e0, roofShade: 0x1b2136, facade: 0x3b4366, glass: 0x10131f, sill: 0x6a739a, foot: 0x14182a,
+  unit: 0x353e60, dark: 0x161b2e, water: 0x1a4282, ripple: 0x4a80cc, sparkle: 0xa8d0ff, bank: 0x938d82, joint: 0x5f5a52,
 };
 let uid = 0;
 
@@ -72,14 +73,16 @@ export class MapView {
     items.push(this.exit);
     for (const s of level.substations) { const img = add(s.x, s.y, "substation"); this.subs.set(s.id, { img, on: false, extras: [] }); items.push(img); }
     for (const l of level.lights) {
-      const img = add(l.x, l.y, "lamp-off"); this.lamps.set(l.id, { img, on: false, timers: [] }); items.push(img);
-      if (opts.glyphs) items.push(scene.add.image(l.x * T + 24, l.y * T + 24, `glyph-${l.color}`));
+      // The lamp head carries its color and glyph shape, so it needs no separate badge.
+      const img = add(l.x, l.y, `lamp-off-${l.color}`); this.lamps.set(l.id, { img, on: false, timers: [] }); items.push(img);
     }
     this.base = scene.add.container(0, 0, items);
     for (const gt of level.gates) {
       const img = scene.add.image(T / 2, T / 2, `${gt.kind}-${gt.color}`);
-      // A bridge spans the canal: turn it when the water runs left to right.
-      if (gt.kind === "bridge" && (level.at(gt.x - 1, gt.y) === "~" || level.at(gt.x + 1, gt.y) === "~")) img.setAngle(90);
+      // Both textures span left to right. Turn a bridge unless there is water above and below it (a north-south
+      // canal, even a wide one), and turn a door whose street runs east-west between buildings.
+      const water = (dy: number) => level.at(gt.x, gt.y + dy) === "~";
+      if (gt.kind === "bridge" ? !(water(-1) && water(1)) : level.solid(gt.x, gt.y - 1) && level.solid(gt.x, gt.y + 1)) img.setAngle(90);
       scene.tweens.add({ targets: img, alpha: 0.82, duration: 700, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       const parts: Phaser.GameObjects.GameObject[] = [img];
       if (opts.glyphs) parts.push(scene.add.image(T - 8, 8, `glyph-${gt.color}`));
@@ -94,7 +97,7 @@ export class MapView {
     lamp.on = on;
     lamp.timers.forEach((t) => t.remove());
     lamp.timers = [];
-    const tex = (v: boolean) => lamp.img.setTexture(v ? `lamp-${l.color}` : "lamp-off");
+    const tex = (v: boolean) => lamp.img.setTexture(v ? `lamp-${l.color}` : `lamp-off-${l.color}`);
     tex(on);
     if (on) lamp.timers = [[50, false], [110, true], [170, false], [230, true]].map(([ms, v]) => this.scene.time.delayedCall(ms as number, () => tex(v as boolean)));
   }
@@ -218,7 +221,7 @@ function water(g: G, level: Level, x: number, y: number, px: number, py: number,
   g.lineStyle(1, A.ripple);
   for (let i = 0; i < 3; i++) { const rx = px + 2 + r() * 20, ry = py + 4 + i * 9 + r() * 4, w = 5 + r() * 8; g.lineBetween(rx, ry, rx + w, ry); }
   if (r() < 0.5) g.fillStyle(A.sparkle).fillRect(px + Math.floor(r() * 30), py + Math.floor(r() * 30), 1, 1);
-  g.fillStyle(0x121830);
+  g.fillStyle(0x0d2550);
   if (bank(-1, 0)) g.fillRect(px, py, 3, T);
   if (bank(1, 0)) g.fillRect(px + T - 3, py, 3, T);
   if (bank(0, -1)) g.fillRect(px, py, T, 3);
