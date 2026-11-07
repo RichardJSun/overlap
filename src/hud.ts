@@ -51,6 +51,9 @@ const CSS = `
   font-size:13px;line-height:1.45;color:var(--ink);transform:translate(-50%,0);transition:opacity .3s ease,transform .4s var(--ease)}
 .hud .coach.off{opacity:0;transform:translate(-50%,-6px)}
 .hud .coach .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
+.hud .bolt{display:inline-block;width:.62em;height:.9em;margin:0 .1em;vertical-align:-.1em;background:var(--amber);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat}
 .hud .card{position:absolute;left:50%;top:42%;box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);padding:16px 26px 14px;text-align:center;
   background:rgba(11,16,32,.94);border:1px solid var(--amber);box-shadow:0 0 40px rgba(255,211,138,.18);opacity:0;transform:translate(-50%,-50%) scale(.96);
   transition:opacity .35s ease,transform .45s var(--ease)}
@@ -80,6 +83,11 @@ const CSS = `
 @container (max-width:339px){.hud .net{font-size:0;gap:0}}
 @media (prefers-reduced-motion:reduce){.hud *,.hud *::before,.hud *::after{animation:none!important;transition-property:opacity,background-color,border-color,color!important}}
 `;
+
+/** Sets text, drawing each ⚡ as the HUD's bolt icon so copy matches the substation tile. */
+function withBolts(el: Element, text: string) {
+  el.replaceChildren(...text.split("⚡").flatMap((part, i) => (i ? [Object.assign(document.createElement("i"), { className: "bolt" }), part] : [part])));
+}
 
 const SPEAKER = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>`;
 
@@ -167,7 +175,7 @@ export class Hud {
 
   /** The current goal, always visible in the corner. `done` turns the label green. */
   objective(text: string, done = false) {
-    this.q(".obj").textContent = text;
+    withBolts(this.q(".obj"), text);
     this.q(".objective").classList.toggle("done", done);
   }
 
@@ -178,7 +186,7 @@ export class Hud {
     if (!text) return;
     this.q(".intro").classList.add("off");
     el.querySelector(".lbl")!.textContent = label;
-    el.querySelector(".say")!.textContent = text;
+    withBolts(el.querySelector(".say")!, text);
   }
 
   /** A short centered card for milestones, e.g. a district restored. */

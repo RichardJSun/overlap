@@ -13,7 +13,7 @@ import { NAMES, reveals, type ColorMask } from "../shared/color.ts";
 import { dronePos, droneVisible, lanternRadius, passable, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Vec } from "../shared/protocol.ts";
-import { fitCamera, HUD_TOP } from "./fit.ts";
+import { bands, fitCamera } from "./fit.ts";
 
 const STEP_MS = 120;
 const FLARE_COOLDOWN = 4000;
@@ -119,7 +119,7 @@ export class RunnerScene extends Phaser.Scene {
     });
   }
 
-  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, HUD_TOP, 8); }
+  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, ...bands(this.level, this.scale.width, this.scale.height, 8)); }
 
   /** First gesture unlocks audio (iOS rule); the ambient pad can only start after that. */
   private wake() {
@@ -168,7 +168,7 @@ export class RunnerScene extends Phaser.Scene {
 
   private updateObjective() {
     const left = this.level.substations.length - this.powered.size;
-    this.hud.objective(`${left ? `Power the substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Reach the exit"} · lantern ${this.reach} tiles`, !left);
+    this.hud.objective(`${left ? `Power the substations ⚡ ${this.powered.size}/${this.level.substations.length}` : "Reach the exit"}`, !left);
   }
 
   /** How much of the whole city is back on, 0..1, for the ambient pad. */

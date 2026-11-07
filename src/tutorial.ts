@@ -30,13 +30,13 @@ const TUTORIAL: Record<Role, Step[]> = {
   runner: [
     { text: "Walk with the arrow keys or WASD, or tap a tile. You only see what your lantern lights.", target: (c) => c.runner, done: (c) => c.moved >= 4 },
     { text: "Your Guide sees the whole city, but sees you only under a lit streetlight. Press Space (or tap yourself) to flare and show them where you are.", target: (c) => c.runner, done: (c) => c.flared },
-    { text: "Talk to your Guide. Their pings show up even in the dark: head where they point.", done: (c) => c.pinged || c.moved >= 14 },
+    { text: "Talk to your Guide. Their pings show up even in the dark, so head where they point.", done: (c) => c.pinged || c.moved >= 14 },
     { text: "A bridge crosses the canal, but only in magenta light. Red lantern + blue streetlight = magenta. Walk to the canal and ask your Guide for blue!", target: (c) => bridge(c), done: (c) => c.bridgeOpen || c.powered > 0 },
-    { text: "Cross, then find the substation ⚡. You can't see it, but your Guide can: follow their pings.", target: (c) => sub(c), done: (c) => c.powered > 0 },
+    { text: "Cross, then find the substation ⚡. You can't see it, but your Guide can, so follow their pings.", target: (c) => sub(c), done: (c) => c.powered > 0 },
     { text: "The block is back on and the exit is lit. Ask your Guide the way, then go!", target: (c) => c.level.exit, done: () => false },
   ],
   guide: [
-    { text: "You run the grid. You see the city and its drones, but the Runner only on camera: under a lit streetlight or in a powered block. Ask them to flare.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
+    { text: "You run the grid. You can see the city and its drones, but you only see the Runner under a lit streetlight or in a powered block. Ask them to flare.", target: (c) => c.runner, done: (c) => c.flared || c.seen },
     { text: "Tap any tile to ping it. The Runner sees pings even in the dark. Ping the bridge over the canal.", target: (c) => bridge(c), done: (c) => c.pinged },
     { text: "Tap the blue streetlight to switch it on. Blue + the Runner's red lantern = magenta, and the bridge appears.", target: (c) => c.level.lights[0], done: (c) => c.lampsOn > 0 },
     { text: "The streetlight is a camera too: you'll see the Runner when they're in its light. Guide them to the substation ⚡.", target: (c) => sub(c), done: (c) => c.powered > 0 },
@@ -50,7 +50,7 @@ const HINTS: Record<Role, Step[]> = {
     { text: "Colored glass! Walk over a filter to change your lantern's color. Your Guide has to plan around it.", target: (c) => c.filterInView ?? undefined, when: (c) => !!c.filterInView, done: () => false },
   ],
   guide: [
-    { text: "Amber ring: a drone the Runner can't see. Light it in its own color, or right-click (hold on a phone) to send a danger ping.", target: (c) => c.unseenDrone ?? undefined, when: (c) => !!c.unseenDrone, done: () => false },
+    { text: "An amber ring marks a drone the Runner can't see. Light it in its own color, or right-click (hold on a phone) to send a danger ping.", target: (c) => c.unseenDrone ?? undefined, when: (c) => !!c.unseenDrone, done: () => false },
   ],
 };
 const HINT_MS = 7000;

@@ -13,7 +13,7 @@ import { hex, NAMES, type ColorMask } from "../shared/color.ts";
 import { budgetFor, droneVisible, lanternRadius, onCamera, sources, TILE, type Level } from "../shared/level.ts";
 import { lightField } from "../shared/lighting.ts";
 import type { Msg, Snapshot, Vec } from "../shared/protocol.ts";
-import { fitCamera, HUD_TOP } from "./fit.ts";
+import { bands, fitCamera } from "./fit.ts";
 
 const PING_COOLDOWN = 2000;
 const FLARE_MS = 2500;
@@ -91,7 +91,7 @@ export class GuideScene extends Phaser.Scene {
     this.loadDistrict(0);
   }
 
-  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, HUD_TOP, HUD_BOTTOM); }
+  private fit() { if (this.level) fitCamera(this.cameras.main, this.level, this.scale.width, this.scale.height, ...bands(this.level, this.scale.width, this.scale.height, HUD_BOTTOM)); }
 
   private get budget() { return budgetFor(this.level, this.powered.size); }
 
@@ -134,7 +134,7 @@ export class GuideScene extends Phaser.Scene {
     this.fit();
     this.coach = { pinged: false, flared: false };
     this.tutor.setDistrict(i);
-    if (this.data_.local && i === 0) this.time.delayedCall(12000, () => this.hud.toast("One screen: this pane hides the Runner the way a real Guide's screen would. On two screens, you'd have to talk.", 7000));
+    if (this.data_.local && i === 0) this.time.delayedCall(12000, () => this.hud.toast("On one screen, this pane hides the Runner the way a real Guide's screen would. On two screens, you'd have to talk.", 7000));
     this.hud.district(i, this.level.name, this.level.intro, this.level.introLabel);
     this.redraw();
   }
