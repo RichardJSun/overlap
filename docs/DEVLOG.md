@@ -123,3 +123,26 @@ Richard's notes, also done:
 - **Demo video, take 3:** 2:33 with the cold open, the tutorial, all five districts, and the white-light ending, with the game's own synthesized sound re-rendered offline.
 
 ![District 5](shots/d5-sub2.png)
+
+## 15:45 Polish, and the lantern readout goes
+- Richard asked whether the Runner needed the lantern's tile count at the bottom of the screen. It didn't, so the goal line now names only the substations or the exit. District 2 has one name everywhere ("Market Street"), and the tutorial and tips no longer hinge on colons.
+- The Guide's goal line also stopped showing the lantern color. The Guide learns it from the camera, when the Runner's light pool is in view, or by asking.
+
+## 16:00 The Main Breaker
+- A sixth room after Grid Central. The main breaker keeps tripping because somebody flipped its safety rule to `load > capacity`. The Guide edits the rule, a CEL expression evaluated by `@marcbachmann/cel-js`, and watches three safety tests pass or fail while they type. Only the Runner can see the live gauges, and the restart surge has pushed the load to 104 MW against a 100 MW capacity.
+- The first rule that passes the tests, `line_clear && load < capacity`, still trips. The Runner has to read the gauges out and turn the override key, and the Guide has to add the key without breaking the "crew on the line" test. `line_clear && load < capacity || override` fails that test because of operator precedence, so the working rule needs parentheses.
+- The Runner's client runs the tests again before it lets the breaker close, so a Guide can't install `true`. CEL only returns a boolean, and the game owns every side effect.
+- A Guide who joins late or reloads goes straight to the breaker. Scenes that have stopped now ignore network messages. Autoplay and the two-browser network check both play the breaker.
+
+![Main Breaker](shots/breaker.png)
+
+## 16:40 The city's wiring drawing
+- Richard said the UI looked like slop. Every label sat in a small chip or a 1px box, the generic dark-dashboard look. We ran the impeccable design workflow: a concept roll, four HTML mockups laid over a real game screenshot, and Richard's pick. He liked the carbon-copy work order but not bright paper on a dark game, so we built the one-line schematic sheet.
+- Every screen is now a sheet of the city's wiring drawing. The title has a drawing border, a bus diagram whose three lamps are the lights that reveal the wordmark, numbered general notes, and a title block that holds Play and Join. Tutorial steps are numbered notes with a leader line that ends on the tile they mean. Toasts sit under a dimension line. The goal and the Guide's console are title-block cells, and the power budget is a row of breaker symbols. The breaker room is a one-line diagram with a switch blade that swings shut and a load needle with mass. The credits are the drawing's last revision.
+- The lit OVERLAP wordmark is the one thing that stayed, at Richard's request.
+
+![Title sheet](shots/title.png)
+
+## 17:10 Signals without voice
+- The Guide's console has Wait, Go, and Flare? buttons. Each one shows as a callout over the Runner's head for two seconds, readable in the dark. Flare? also tells the Runner how to flare. The Guide's tutorial teaches Flare? in its first step and Wait and Go in its last.
+- On a phone the console wraps to two rows, and the map moves up to stay clear of it.

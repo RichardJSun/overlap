@@ -5,7 +5,7 @@
 - **Play:** https://overlap.richardsun.workers.dev
 - Two computers play best: one presses **Play as Runner** and sends the link (or the 4-letter code) to the other, who joins as the Guide. A phone can join by QR code, and a second browser tab works too.
 - One screen: https://overlap.richardsun.workers.dev/?local=1 shows both roles side by side.
-- Runner: arrows / WASD, or tap a tile; Space flares. Guide: tap a tile to ping, tap a streetlight to switch it.
+- Runner: arrows / WASD, or tap a tile; Space flares. Guide: tap a tile to ping, tap a streetlight to switch it, and use the Wait, Go and Flare? buttons to signal without talking.
 - District 1 is a tutorial that walks each player through their role.
 - Source: https://github.com/RichardJSun/overlap
 
@@ -19,7 +19,7 @@ A city is in a blackout. The **Runner** walks pitch-black streets with a lantern
 
 Light colors add. Red lantern + blue streetlight makes magenta, and the first canal bridge exists only in magenta light. Red + green makes yellow, which opens locked doors. Colored glass on the street changes the lantern's color, and in every district the glass brings colors that no streetlight has, so the two players have to combine what each of them holds. Drones show up only in their own color. One is red in a district with no red streetlights, so the Guide can only shout. Another is yellow and only appears where the Runner's red light meets a green streetlight. The last door in the city opens only in white light, which takes the lantern and two streetlights on one tile.
 
-Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach a tile farther. There are five districts. When the last one is lit, the separated colors slide back together into white and both screens show the same view for the first time.
+Each substation the Runner reaches powers its block for good, moves the checkpoint, gives the Guide more power, and lets the lantern reach a tile farther. There are five districts and one last room. At the main breaker, somebody has flipped the safety rule, so the Guide rewrites it as a small CEL expression against three safety tests. Only the Runner can read the live gauges, and the restart surge trips any rule that the tests alone would pass, so the two players have to talk it through. When the breaker holds, the separated colors slide back together into white and both screens show the same view for the first time.
 
 The story is told without a narrator. The game opens on the field tech asleep, with dispatch calling. After that, each district opens on a resident's call about something strange they've seen, and closes on a line in the utility's log.
 
@@ -31,12 +31,15 @@ Every color has a shape too (red triangle, green circle, blue square), so the ga
 - One Cloudflare Worker serves the client and routes `/room/CODE` to a Durable Object per room. The Room only relays messages and stores the last snapshot for late joiners.
 - Both clients run the same pure light-field function, so lighting never goes over the network. Only changes are sent.
 - A breadth-first solver proves every district is solvable within the power budget, that none can be solved without the Guide, and that every gate is needed. The same solver drives a headless autoplayer that plays the whole game in a real browser.
+- The breaker rule is a CEL expression evaluated by `@marcbachmann/cel-js`. It only returns true or false, and the Runner's client runs the safety tests again before the breaker closes.
+- The UI is drawn as a sheet of the city's wiring drawing: numbered notes with leader lines, title-block cells, breaker symbols, and a one-line diagram for the breaker room. We picked it from four HTML mockups with the impeccable design workflow, after the first UI looked like a generic dark dashboard.
 - The game was built by AI coding agents (Claude Code) directed by Richard Sun. A main session owned the shared contracts. Parallel agents in separate git worktrees built the network layer, audio, districts, art, and UI. The devlog and prompts are in the repo.
 
 ## Challenges
 
 - **Keeping two screens honest.** The gate logic, the solver, and the renderer had to agree on exactly which tiles are lit. We made one pure function the source of truth for logic, and used the raycast polygons only for looks.
 - **Colored light that reads.** Multiplying a lightmap over dark tiles turns red light into mud. We store the tiles brighter than the palette and let the lightmap darken them, then add a soft additive bloom so mixed colors pop.
+- **A logic puzzle that needs both players.** With the safety tests on screen, the Guide could solve the breaker alone. The live surge, which only the Runner sees, is what makes the first passing rule trip, so the Runner has to read the gauges out.
 - **Testing a game no one could watch.** The in-app browser pauses animation when hidden, which looked like broken input. Headless Playwright became the source of truth: a scripted district 1 run, a two-tab network test, and a solver-driven full playthrough.
 
 ## Accomplishments
@@ -55,5 +58,5 @@ Designing around information asymmetry is mostly about what each player *can't* 
 
 ## What's next
 
-- A bonus "substation repair" district where the Guide fixes a broken logic rule.
+- Direction arrows for the Guide's signals.
 - A spectator view for showcases, and more districts.

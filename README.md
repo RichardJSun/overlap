@@ -27,7 +27,7 @@ Each substation the Runner reaches powers its block for good, moves the checkpoi
 
 ## The story
 
-The game opens in the field tech's dark bedroom with the phone ringing on the nightstand. Answer it, and dispatch apologises for the hour while the skyline in the window turns from white to red, green, and blue and goes out. After that, the story comes only from in-world records. Each district opens on a call from a resident who has noticed something strange, and closes on a line in the utility's log. When the last block comes back, the separated colors slide together into white across the city.
+The game opens in the field tech's dark bedroom with the phone ringing on the nightstand. Answer it, and dispatch apologises for the hour while the skyline in the window turns from white to red, green, and blue and goes out. After that, the story comes only from in-world records. Each district opens on a call from a resident who has noticed something strange, and closes on a line in the utility's log. After the last district, the main breaker won't stay closed. When the two players fix its rule, the separated colors slide together into white across the city.
 
 | District | The trick |
 |---|---|
@@ -36,6 +36,7 @@ The game opens in the field tech's dark bedroom with the phone ringing on the ni
 | 3 · Old Locks | only green streetlights, a long cyan bridge that needs two of them, and two glass colors to juggle |
 | 4 · Signal Yard | a red drone that no streetlight can show, so the Guide can only warn |
 | 5 · Grid Central | a yellow drone that only exists where the Runner's red meets a green streetlight, and a white door |
+| 6 · Main Breaker | the Guide rewrites the breaker's safety rule in CEL against three tests; only the Runner can read the gauges and turn the override key |
 
 ## How to play
 
@@ -52,6 +53,8 @@ No second device? Open [`?local=1`](https://overlap.richardsun.workers.dev/?loca
 | Ping | | tap any tile (2 s cooldown) |
 | Streetlight | | tap a streetlight to switch it (power budget shown as bars) |
 | Danger ping | | right-click a tile, or hold on a phone |
+| Signal | | Wait, Go and Flare? on the console, shown over the Runner's head |
+| Main Breaker | K turns the override key, Space pulls the lever | type the rule, then Install |
 
 District 1 is a tutorial. Each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
 
@@ -60,6 +63,12 @@ A drone touching the Runner sends them back to the last substation. If the Guide
 ## Theme
 
 "Visibility" is the mechanic itself, in both directions. The Runner sees only what light reaches. The Guide sees the city but sees the Runner only through light too, because every streetlight is a camera. Switching a streetlight on both reveals the street to the Runner and reveals the Runner to the Guide. What one player can see, the other can't, and progress needs both views combined. The closest prior art we know is *Hue* (2016), where objects vanish when they match the background color. In Overlap, two players each control one light color and mix them to reveal the level.
+
+## The look
+
+Every screen is drawn as a sheet of the city's wiring drawing. Tutorial steps are numbered notes with a leader line to the tile they mean, the goal and the Guide's console sit in title-block cells, the power budget is a row of breaker symbols, and the breaker room is a one-line diagram. The lit OVERLAP wordmark on the title is a sign that only shows where the two streetlights and your lantern fall.
+
+![Title sheet](docs/shots/title.png)
 
 ## How it's built
 
@@ -83,11 +92,12 @@ flowchart LR
 - **Server:** one Cloudflare Worker that serves the built client and routes `/room/CODE` to a SQLite-backed Durable Object per room. The Room does no game logic. It forwards messages to the other player and keeps the last snapshot, so a Guide who joins late (or reconnects) catches up.
 - **Two kinds of seeing, one function.** The gate logic, the solver, the Runner's view, and the Guide's cameras (`onCamera` in [`src/shared/level.ts`](src/shared/level.ts)) all read the same pure light field.
 - **Lighting is never sent over the wire.** Both clients compute the light field from shared state with the same pure function in [`src/shared/lighting.ts`](src/shared/lighting.ts). Messages go out only on change (a new tile, a toggled lamp, drones at most 5 times a second), which keeps a session well inside the Workers free plan.
+- **The Main Breaker runs on CEL.** The Guide's rule is a [CEL](https://cel.dev) expression evaluated by `@marcbachmann/cel-js` over four readings. It only returns true or false. The Runner's client runs the three safety tests again before the breaker closes, and [`tests/breaker.test.ts`](tests/breaker.test.ts) checks that the obvious fixes fail for the right reasons.
 - **Every district is proven solvable.** [`src/shared/level.ts`](src/shared/level.ts) has a breadth-first solver over (Runner tile, lights on, substations powered, lantern color) within the power budget. The tests check that each district can be solved, that it can't be solved without the Guide's lights, and that walling up any gate makes it unsolvable. The same solver drives a headless autoplayer ([`scripts/autoplay.mjs`](scripts/autoplay.mjs)) that plays the whole game in a real browser and waits out drones.
 
 ```
 src/shared/   protocol, color masks, light field, level format + solver
-src/scenes/   Runner, Guide, Ending
+src/scenes/   Runner, Guide, Intro (cold open), Breaker, Ending
 src/render/   procedural textures, visibility polygons, lightmap, post effects
 src/net/      Transport interface, WebSocket and in-memory (?local=1) transports
 src/audio/    procedural WebAudio
