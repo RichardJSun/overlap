@@ -10,9 +10,9 @@ A two-player co-op puzzle game about a city in blackout, made for WolfJam 2026 (
 
 ## The idea
 
-One player is the **Runner**. They walk the dark streets carrying a red lantern and see only what light reaches. The other player is the **Guide**, in the utility control room. The Guide sees the whole map but can't walk it. They drop pings and switch colored streetlights on and off within a power budget.
+One player is the **Runner**. They walk the dark streets carrying a lantern and see only what light reaches. Outside the light there is nothing at all. The other player is the **Guide**, in the utility control room. The Guide sees the city map and its security drones, but sees the Runner only **on camera**: the streetlights are the control room's cameras, so the Guide sees the Runner only under a lit streetlight or inside a block that is back on the grid. The Guide drops pings and switches colored streetlights on and off within a power budget. The Runner can **flare** to show the Guide where they are.
 
-Light colors add. Some bridges and doors exist only under a specific mixed color, and some security drones show up only under theirs. Neither player can see the solution alone, so the puzzles happen where the two players' lights overlap.
+Light colors add. Some bridges and doors exist only under a specific mixed color, and some drones show up only under theirs. Colored glass **filters** on the street change the Runner's lantern color, so both players choose colors. Neither player can see the solution alone, so the puzzles happen where the two players' lights overlap.
 
 | Mix | Makes | Used for |
 |---|---|---|
@@ -36,14 +36,17 @@ No second device? Open [`?local=1`](https://overlap.richardsun.workers.dev/?loca
 | | Runner | Guide |
 |---|---|---|
 | Move | arrows / WASD, or tap a tile | — |
+| Flare | Space, or tap yourself (4 s cooldown) | — |
 | Ping | — | tap any tile (2 s cooldown) |
-| Streetlight | — | tap a lamp to switch it (power budget shown as bars) |
+| Streetlight | — | tap a streetlight to switch it (power budget shown as bars) |
+
+District 1 is a tutorial: each screen walks its player through their half of the game with numbered steps and a pointer over the tile to look at.
 
 A drone touching the Runner sends them back to the last substation. If the Guide switches off the light holding up the bridge the Runner is standing on, the bridge vanishes, and so does the Runner. There are no lives and no game over.
 
 ## Theme
 
-"Visibility" is the mechanic itself. The Runner's screen shows only what is lit, and the Guide's screen shows everything but can only act through light. What one player can see, the other can't, and progress needs both views combined. The closest prior art we know is *Hue* (2016), where objects vanish when they match the background color. In Overlap, two players each control one light color and mix them to reveal the level.
+"Visibility" is the mechanic itself, in both directions. The Runner sees only what light reaches. The Guide sees the city but sees the Runner only through light too, because every streetlight is a camera. Switching a streetlight on both reveals the street to the Runner and reveals the Runner to the Guide. What one player can see, the other can't, and progress needs both views combined. The closest prior art we know is *Hue* (2016), where objects vanish when they match the background color. In Overlap, two players each control one light color and mix them to reveal the level.
 
 ## How it's built
 
@@ -65,8 +68,9 @@ flowchart LR
 
 - **Client:** TypeScript, Phaser 4, Vite. Every texture and every sound is generated in code. There are no image or audio files.
 - **Server:** one Cloudflare Worker that serves the built client and routes `/room/CODE` to a SQLite-backed Durable Object per room. The Room does no game logic. It forwards messages to the other player and keeps the last snapshot, so a Guide who joins late (or reconnects) catches up.
+- **Two kinds of seeing, one function.** The gate logic, the solver, the Runner's view, and the Guide's cameras (`onCamera` in [`src/shared/level.ts`](src/shared/level.ts)) all read the same pure light field.
 - **Lighting is never sent over the wire.** Both clients compute the light field from shared state with the same pure function in [`src/shared/lighting.ts`](src/shared/lighting.ts). Messages go out only on change (a new tile, a toggled lamp, drones at most 5 times a second), which keeps a session well inside the Workers free plan.
-- **Every district is proven solvable.** [`src/shared/level.ts`](src/shared/level.ts) has a breadth-first solver over (Runner tile, lights on, substations powered) within the power budget. The tests check that each district can be solved, that it can't be solved without the Guide's lights, and that walling up any gate makes it unsolvable. The same solver drives a headless autoplayer ([`scripts/autoplay.mjs`](scripts/autoplay.mjs)) that plays the whole game in a real browser and waits out drones.
+- **Every district is proven solvable.** [`src/shared/level.ts`](src/shared/level.ts) has a breadth-first solver over (Runner tile, lights on, substations powered, lantern color) within the power budget. The tests check that each district can be solved, that it can't be solved without the Guide's lights, and that walling up any gate makes it unsolvable. The same solver drives a headless autoplayer ([`scripts/autoplay.mjs`](scripts/autoplay.mjs)) that plays the whole game in a real browser and waits out drones.
 
 ```
 src/shared/   protocol, color masks, light field, level format + solver
