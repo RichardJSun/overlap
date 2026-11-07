@@ -36,9 +36,11 @@ export class GuideScene extends Phaser.Scene {
   private lastPing = -Infinity;
   private flareUntil = -Infinity;
   private seen = false;
-  private lastSeenAt = 0;
+  private lastSeenAt = -1; // -1: stamp on the next frame (the clock reads stale inside create())
   private lastSeenPos: Vec = { x: 0, y: 0 };
+  private everSeen = false; // in this district
   private clockStart: number | null = null;
+  private clockArmed = false;
   private awake = false;
   private tutor!: Tutor;
   private coach = { pinged: false, flared: false };
@@ -68,7 +70,7 @@ export class GuideScene extends Phaser.Scene {
     this.net.onPeer((c) => {
       this.peer = c;
       this.hud.net(this.status, c);
-      if (c && this.clockStart === null) this.clockStart = this.time.now;
+      if (c) this.clockArmed = true;
     });
     this.lanternRing = this.add.image(0, 0, "ping").setDepth(19).setScale(0.55).setAlpha(0.9);
     this.runner = this.add.image(0, 0, "runner").setDepth(20);
@@ -112,8 +114,9 @@ export class GuideScene extends Phaser.Scene {
       this.placeDrone(d.id, d.path[0], false);
     }
     this.moveRunner(this.level.start, false);
-    this.lastSeenAt = this.time.now;
+    this.lastSeenAt = -1;
     this.lastSeenPos = { ...this.level.start };
+    this.everSeen = false;
     this.seen = false;
     this.fit();
     this.coach = { pinged: false, flared: false };
@@ -128,7 +131,7 @@ export class GuideScene extends Phaser.Scene {
   private redraw() {
     const seen = this.onCam;
     if (this.seen && !seen) this.lastSeenAt = this.time.now;
-    if (seen) this.lastSeenPos = { ...this.runnerPos };
+    if (seen) { this.lastSeenPos = { ...this.runnerPos }; this.everSeen = true; }
     this.seen = seen;
     this.runner.setVisible(seen);
     this.lanternRing.setVisible(seen).setTint(hex(this.lantern));
@@ -269,7 +272,8 @@ export class GuideScene extends Phaser.Scene {
   }
 
   update(time: number) {
-    if (this.clockStart === null && this.data_.local) this.clockStart = time;
+    if (this.clockStart === null && (this.clockArmed || this.data_.local)) this.clockStart = time;
+    if (this.lastSeenAt < 0) this.lastSeenAt = time;
     const s = this.clockStart === null ? -1 : Math.floor((time - this.clockStart) / 1000);
     this.hud.clock(s < 0 ? "--:--" : `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`);
     this.input.setDefaultCursor(time - this.lastPing >= PING_COOLDOWN ? "crosshair" : "wait");
@@ -282,6 +286,6 @@ export class GuideScene extends Phaser.Scene {
       level: this.level, runner: this.lastSeenPos, moved: 0, ...this.coach, lampsOn: this.lightsOn.size, powered: this.powered.size,
       seen: this.seen, bridgeOpen: false, filterInView: null, unseenDrone: warned ? warned.tile : null, visible: () => true,
     });
-    if (!this.seen) this.ghostLabel.setText(`last seen ${Math.round((time - this.lastSeenAt) / 1000)}s ago`);
+    if (!this.seen) this.ghostLabel.setText(this.everSeen ? `last seen ${Math.round((time - this.lastSeenAt) / 1000)}s ago` : "Runner started here");
   }
 }

@@ -45,7 +45,7 @@ export class RunnerScene extends Phaser.Scene {
   private queued: Vec[] = []; // a tap shorter than one frame still moves one tile
   private target: Vec | null = null;
   private t0 = 0;
-  private runStart = 0;
+  private runStart = -1; // set on the first frame: a scene's clock reads stale inside create()
   private caught = 0;
   private invulnUntil = 0;
   private lastFlare = -Infinity;
@@ -106,7 +106,6 @@ export class RunnerScene extends Phaser.Scene {
 
     this.runner = this.add.image(0, 0, "runner").setDepth(20);
     this.scale.on("resize", () => this.fit());
-    this.runStart = this.time.now;
     // ?district=N starts at district N (for testing and for showing one puzzle).
     const d = Number(new URLSearchParams(location.search).get("district")) - 1;
     this.loadDistrict(d >= 0 && d < LEVELS.length ? d : 0);
@@ -366,6 +365,7 @@ export class RunnerScene extends Phaser.Scene {
   }
 
   update(time: number) {
+    if (this.runStart < 0) this.runStart = time;
     if (!this.level || this.transitioning) return;
     const t = (time - this.t0) / 1000;
     const rx = this.runner.x / TILE - 0.5, ry = this.runner.y / TILE - 0.5;
