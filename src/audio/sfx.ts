@@ -1,7 +1,7 @@
 // Procedural WebAudio: every sound is synthesized, nothing is loaded.
 // Graph: {sfx, ambient, drone} buses -> master (mute) -> limiter -> destination.
 
-export type Kind = "step" | "ping" | "lightOn" | "lightOff" | "denied" | "substation" | "exitOpen" | "respawn" | "ending" | "radio";
+export type Kind = "step" | "ping" | "lightOn" | "lightOff" | "denied" | "substation" | "exitOpen" | "respawn" | "ending" | "radio" | "ring" | "pickup";
 
 const KEY = "overlap.muted";
 const FLOOR = 1e-4; // exponential ramps cannot reach 0
@@ -183,6 +183,29 @@ const SOUNDS: Record<Kind, (v: Voice, out: AudioNode, t: number) => void> = {
     v.noise(v.filter(g, "bandpass", 1900, 1.1), t, 0.3, 1.3);
     v.tone(out, "sine", 1250, t + 0.03, 0.003, 0.1, 0.05);
     v.tone(out, "sine", 1650, t + 0.11, 0.003, 0.09, 0.06);
+  },
+
+  // One ring of a phone on a nightstand: two short warbling bursts.
+  ring(v, out, t) {
+    for (const s of [0, 0.36]) {
+      const g = v.gain(out);
+      g.gain.setValueAtTime(0, t + s);
+      g.gain.linearRampToValueAtTime(0.16, t + s + 0.01);
+      g.gain.setValueAtTime(0.16, t + s + 0.24);
+      g.gain.linearRampToValueAtTime(0, t + s + 0.27);
+      for (const f of [1320, 1660]) {
+        const o = v.osc(g, "sine", f, t + s, t + s + 0.3);
+        // A fast warble, like a cheap speaker.
+        for (let k = 0; k < 12; k++) o.frequency.setValueAtTime(f * (k % 2 ? 1.06 : 1), t + s + k * 0.025);
+      }
+    }
+  },
+
+  pickup(v, out, t) {
+    const g = v.gain(out);
+    v.env(g.gain, t, 0.002, 0.3, 0.05);
+    v.noise(v.filter(g, "lowpass", 2500), t, 0.06, 0.7);
+    v.tone(out, "sine", 300, t + 0.02, 0.002, 0.12, 0.06);
   },
 
   ending(v, out, t) {
@@ -371,6 +394,8 @@ export const sfx = {
   },
   ending(): void { fire("ending"); },
   radio(): void { fire("radio"); },
+  ring(): void { fire("ring"); },
+  pickup(): void { fire("pickup"); },
   muted: loadMuted(),
   setMuted(m: boolean): void {
     sfx.muted = m;

@@ -10,6 +10,7 @@ import type { ColorMask } from "../shared/color.ts";
 import type { Level } from "../shared/level.ts";
 import type { LightSource } from "../shared/lighting.ts";
 import type { Role } from "../shared/protocol.ts";
+import { Bedroom } from "./bedroom.ts";
 import { fitCamera } from "./fit.ts";
 
 const LIT = 0x4a5068; // ambient while the grid is up: a night city, so the colored pools stand out
@@ -40,6 +41,7 @@ export class IntroScene extends Phaser.Scene {
   private info!: SceneData & { role: Role };
   private done = false;
   private text?: HTMLDivElement;
+  private hint?: HTMLDivElement;
 
   constructor() { super("intro"); }
 
@@ -71,22 +73,47 @@ export class IntroScene extends Phaser.Scene {
       layer.draw([...alive].map((p) => p.src), state.windows ? blocks : [], (k(16) << 16) | (k(8) << 8) | k(0));
     });
 
-    this.say("20:40 · City Power & Light", "Canal Street is running on white light. The switchboard is quiet.");
-    // 1. The grid fails and the white comes apart into red, green and blue.
-    this.time.delayedCall(2400, () => {
-      this.say("20:43", "Calls from Canal Street. Every streetlight has split into red, green and blue.");
-      this.tweens.add({ targets: state, spread: 1.2, duration: 1600, ease: "Cubic.easeOut" });
-    });
-    // 2. The separated colors die one by one, each with a stutter.
+    state.spread = 1.2; // by the time we're on the street, the white has already come apart
+
+    // Cold open: the field tech asleep, the phone ringing on the nightstand.
+    const room = new Bedroom(this.game.canvas.parentElement!);
+    this.events.once("shutdown", () => room.destroy());
+    this.say("Incoming call", "Dispatch · City Power & Light");
+    this.hintText("Press any key to answer · Esc to skip");
+    sfx.ring();
+    const ringer = this.time.addEvent({ delay: 2200, loop: true, callback: () => sfx.ring() });
+    const answer = () => {
+      if (room.answered) return;
+      ringer.remove();
+      sfx.unlock();
+      sfx.pickup();
+      this.time.delayedCall(250, () => sfx.radio());
+      room.set("answered");
+      this.say("20:43 · Dispatch", "Sorry to wake you. Canal Street's lights just split into colors, and now they're going out.");
+      this.hintText("Press any key to skip");
+      this.time.delayedCall(1300, () => room.set("split"));
+      this.time.delayedCall(3500, () => room.set("dying"));
+      this.time.delayedCall(5200, () => { room.set("out"); this.street(parts, alive, state, map, level); });
+    };
+    this.time.delayedCall(10000, answer); // nobody at the keys: pick up anyway
+
+    const onInput = (esc: boolean) => { sfx.unlock(); if (esc || room.answered) this.finish(); else answer(); };
+    this.input.keyboard?.on("keydown", (e: KeyboardEvent) => onInput(e.key === "Escape"));
+    this.input.on("pointerdown", () => onInput(false));
+    this.events.once("shutdown", () => this.text?.remove());
+  }
+
+  /** On the street: the separated colors die one by one, the cameras cut out, then BLACKOUT. */
+  private street(parts: WhitePart[], alive: Set<WhitePart>, state: { amb: number; spread: number; windows: boolean }, map: MapView, level: Level) {
+    this.say("20:44 · Dispatch", "I can't see a thing down there. Grab your lantern.");
     const order = [...parts].sort((p, q) => (q.c.x + q.c.y) - (p.c.x + p.c.y) || p.src.color - q.src.color);
-    order.forEach((p, i) => this.time.delayedCall(4400 + i * 120, () => {
-      if (i === 0) this.say("20:44", "The colors are going out one at a time.");
+    order.forEach((p, i) => this.time.delayedCall(900 + i * 110, () => {
       alive.delete(p);
       if (i % 3 === 0) sfx.lightOff();
       this.time.delayedCall(60, () => alive.add(p));
       this.time.delayedCall(120, () => alive.delete(p));
     }));
-    const dark = 4400 + order.length * 120 + 200;
+    const dark = 900 + order.length * 110 + 200;
     this.time.delayedCall(dark, () => {
       this.staticBurst(900);
       state.windows = false;
@@ -94,22 +121,18 @@ export class IntroScene extends Phaser.Scene {
       map.setExitOpen(false);
       this.tweens.add({ targets: state, amb: 0, duration: 900, ease: "Quad.easeIn" });
     });
-    // 3. Blackout, then play.
     this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "21:00 · Every camera in the district is down. The streetlights still see, so use them to get the field tech through.", true));
-    this.time.delayedCall(dark + 3600, () => this.finish());
-
-    const skip = () => { sfx.unlock(); this.finish(); };
-    this.input.keyboard?.once("keydown", skip);
-    this.input.once("pointerdown", skip);
-    this.events.once("shutdown", () => this.text?.remove());
+    this.time.delayedCall(dark + 3800, () => this.finish());
   }
+
+  private hintText(t: string) { if (this.hint) this.hint.textContent = t; }
 
   private say(stamp: string, line: string, big = false) {
     if (!this.text) {
       this.text = document.createElement("div");
       this.text.style.cssText = "position:absolute;left:0;right:0;bottom:12%;padding:0 20px;text-align:center;pointer-events:none;color:#e8ecff;text-shadow:0 2px 12px #000";
       this.game.canvas.parentElement!.appendChild(this.text);
-      const hint = document.createElement("div");
+      const hint = (this.hint = document.createElement("div"));
       hint.textContent = "Press any key to skip";
       hint.style.cssText = "position:absolute;right:14px;bottom:12px;font:12px system-ui,sans-serif;color:#7d87b2;pointer-events:none";
       this.game.canvas.parentElement!.appendChild(hint);

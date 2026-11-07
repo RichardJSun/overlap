@@ -30,11 +30,14 @@ mark("title done");
 
 // 2. One screen, both roles.
 await page.goto(`${base}/?local=1`);
+// Let the phone ring on camera, then answer it; the cold open plays out before district 1.
+await page.waitForTimeout(3500);
+await page.keyboard.press("Enter");
 await install(page);
 await page.evaluate(() => {
   window.__audioLog = [];
   const sfx = window.__overlap.sfx, log = window.__audioLog;
-  for (const k of ["step", "ping", "lightOn", "lightOff", "denied", "substation", "exitOpen", "respawn", "ending", "radio"]) {
+  for (const k of ["step", "ping", "lightOn", "lightOff", "denied", "substation", "exitOpen", "respawn", "ending", "radio", "ring", "pickup"]) {
     const orig = sfx[k].bind(sfx);
     sfx[k] = () => { log.push({ k, at: Date.now() }); orig(); };
   }

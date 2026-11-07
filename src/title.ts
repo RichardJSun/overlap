@@ -1,4 +1,5 @@
 import { toCanvas } from "qrcode";
+import { sfx } from "./audio/sfx.ts";
 import { isRoomCode, newRoomCode } from "./net/room.ts";
 import type { Transport } from "./net/transport.ts";
 import { WebSocketTransport } from "./net/ws.ts";
@@ -145,6 +146,7 @@ export function showTitle(root: HTMLElement, start: Start): void {
   });
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    sfx.unlock();
     const code = input.value;
     if (!isRoomCode(code)) {
       err.textContent = "Enter the 4-letter code shown on the Runner's screen.";
@@ -157,6 +159,7 @@ export function showTitle(root: HTMLElement, start: Start): void {
 
   // Runner lobby: show the code and QR, wait for the Guide.
   runnerBtn.addEventListener("click", () => {
+    sfx.unlock();
     const code = newRoomCode();
     const t = new WebSocketTransport(code, "runner");
     const link = `${location.origin}/?room=${code}&role=guide`;
