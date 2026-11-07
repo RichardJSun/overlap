@@ -7,16 +7,34 @@ import { MapView } from "../render/map.ts";
 import { addPost } from "../render/post.ts";
 import { makeTextures } from "../render/textures.ts";
 import type { ColorMask } from "../shared/color.ts";
+import type { Level } from "../shared/level.ts";
 import type { LightSource } from "../shared/lighting.ts";
 import type { Role } from "../shared/protocol.ts";
 import { fitCamera } from "./fit.ts";
 
 const LIT = 0x4a5068; // ambient while the grid is up: a night city, so the colored pools stand out
-const POOL_COLORS: ColorMask[] = [4, 2, 1, 5, 6, 3, 4, 1, 2, 6, 5];
+
+export type WhitePart = { src: LightSource; c: { x: number; y: number }; dx: number; dy: number };
+
+/** A few white streetlights on street tiles, each built from a red, a green and a blue light on one spot. */
+export function whiteLights(level: Level, count = 5): WhitePart[] {
+  const centers: { x: number; y: number }[] = [];
+  for (let y = 1; y < level.h - 1 && centers.length < count; y++)
+    for (let x = 1; x < level.w - 1 && centers.length < count; x++)
+      if (level.at(x, y) === "." && (x * 7 + y * 13) % 23 === 0 && centers.every((c) => Math.hypot(c.x - x, c.y - y) > 5)) centers.push({ x, y });
+  const dirs: [ColorMask, number, number][] = [[4, 0, -1], [2, 0.87, 0.5], [1, -0.87, 0.5]];
+  return centers.flatMap((c) => dirs.map(([color, dx, dy]) => ({ src: { x: c.x, y: c.y, color, radius: 3 }, c, dx, dy })));
+}
+
+/** Pull each white light's three colors `k` tiles apart (0 = white again). */
+export function spreadApart(parts: WhitePart[], k: number) {
+  for (const p of parts) { p.src.x = p.c.x + p.dx * k; p.src.y = p.c.y + p.dy * k; }
+}
 
 /**
- * Opening shot: the first street with its power on and full of colored light. The color drains out,
- * the lights die one by one, and the city goes black. Then the game starts. Any key or tap skips it.
+ * Opening shot: the first street with its power on and every streetlight white. White is red, green
+ * and blue together; when the grid fails each light comes apart into its three colors, those die one
+ * by one, and the city goes black. Then the game starts. Any key or tap skips it.
  */
 export class IntroScene extends Phaser.Scene {
   private info!: SceneData & { role: Role };
@@ -39,49 +57,44 @@ export class IntroScene extends Phaser.Scene {
     fit();
     this.scale.on("resize", fit);
 
-    // A street full of colored light: pools on spaced-out street tiles, plus the district's own lamps.
-    const pools: LightSource[] = [];
-    for (let y = 1; y < level.h - 1 && pools.length < POOL_COLORS.length; y++)
-      for (let x = 1; x < level.w - 1 && pools.length < POOL_COLORS.length; x++)
-        if (level.at(x, y) === "." && (x * 7 + y * 13) % 17 === 0) pools.push({ x, y, color: POOL_COLORS[pools.length], radius: 3 });
-    const lamps: LightSource[] = level.lights.map((l) => ({ ...l }));
-    const alive = new Set<LightSource>([...pools, ...lamps]);
+    // White streetlights, each really a red, a green and a blue light on the same spot.
+    level.lights.forEach((l) => map.setLamp(l.id, false));
+    const parts = whiteLights(level);
+    const alive = new Set(parts);
     const blocks = level.substations.map((s) => s.block);
     const layer = new LightLayer(this, level, LIT).setDepth(10);
-    const state = { amb: 1, gray: 0, windows: true };
-    const tint = this.cameras.main.filters.external.addColorMatrix();
+    const state = { amb: 1, spread: 0, windows: true };
 
     this.events.on("update", () => {
       const a = state.amb, k = (c: number) => Math.round(((LIT >> c) & 0xff) * a);
-      layer.draw([...alive].filter((s) => s.radius > 0), state.windows ? blocks : [], (k(16) << 16) | (k(8) << 8) | k(0));
-      tint.colorMatrix.reset();
-      tint.colorMatrix.saturate(-state.gray);
+      spreadApart(parts, state.spread);
+      layer.draw([...alive].map((p) => p.src), state.windows ? blocks : [], (k(16) << 16) | (k(8) << 8) | k(0));
     });
 
-    this.say("Canal Street, 8:40 PM.", "The grid is up, and every color is out on the street.");
-    // 1. The color drains out of the grid.
-    this.time.delayedCall(1800, () => {
-      this.say("Then the grid started to fail.", "");
-      this.tweens.add({ targets: state, gray: 0.92, duration: 1700, ease: "Sine.easeIn" });
+    this.say("Canal Street, 8:40 PM.", "Every streetlight burns white, and white is every color at once.");
+    // 1. The grid fails and the white comes apart into red, green and blue.
+    this.time.delayedCall(2400, () => {
+      this.say("Then the grid failed, and the white came apart.", "");
+      this.tweens.add({ targets: state, spread: 1.2, duration: 1600, ease: "Cubic.easeOut" });
     });
-    // 2. The lights die one by one, each with a stutter.
-    const order = [...alive].sort((p, q) => (q.x + q.y) - (p.x + p.y));
-    order.forEach((s, i) => this.time.delayedCall(3300 + i * 170, () => {
-      alive.delete(s);
-      sfx.lightOff();
-      this.time.delayedCall(70, () => alive.add(s));
-      this.time.delayedCall(140, () => alive.delete(s));
+    // 2. The separated colors die one by one, each with a stutter.
+    const order = [...parts].sort((p, q) => (q.c.x + q.c.y) - (p.c.x + p.c.y) || p.src.color - q.src.color);
+    order.forEach((p, i) => this.time.delayedCall(4400 + i * 120, () => {
+      if (i === 0) this.say("One color at a time, the city went dark.", "");
+      alive.delete(p);
+      if (i % 3 === 0) sfx.lightOff();
+      this.time.delayedCall(60, () => alive.add(p));
+      this.time.delayedCall(120, () => alive.delete(p));
     }));
-    const dark = 3300 + order.length * 170 + 200;
+    const dark = 4400 + order.length * 120 + 200;
     this.time.delayedCall(dark, () => {
       state.windows = false;
       level.substations.forEach((s) => map.setPowered(s.id, false));
-      level.lights.forEach((l) => map.setLamp(l.id, false));
       map.setExitOpen(false);
       this.tweens.add({ targets: state, amb: 0, duration: 900, ease: "Quad.easeIn" });
     });
     // 3. Blackout, then play.
-    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "Bring the color back, block by block. Together.", true));
+    this.time.delayedCall(dark + 1100, () => this.say("BLACKOUT", "Put the colors back together, block by block.", true));
     this.time.delayedCall(dark + 3600, () => this.finish());
 
     const skip = () => { sfx.unlock(); this.finish(); };
