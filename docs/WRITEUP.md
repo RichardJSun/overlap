@@ -7,7 +7,7 @@
 - One screen: https://overlap.richardsun.workers.dev/?local=1 shows both roles side by side.
 - Runner: arrows / WASD, or tap a tile; Space flares. Guide: tap a tile to ping, tap a streetlight to switch it.
 - District 1 is a tutorial that walks each player through their role.
-- Source: https://github.com/My-Name-Is-Jeff/overlap
+- Source: https://github.com/RichardJSun/overlap
 
 ## Inspiration
 

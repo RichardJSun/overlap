@@ -4,7 +4,7 @@ A two-player co-op puzzle game about a city in blackout, made for WolfJam 2026 (
 
 **Play:** https://overlap.richardsun.workers.dev
 **One screen, both roles:** https://overlap.richardsun.workers.dev/?local=1
-**Source:** https://github.com/My-Name-Is-Jeff/overlap
+**Source:** https://github.com/RichardJSun/overlap
 
 ![Red lantern plus blue streetlight raises the magenta bridge](docs/shots/d1-magenta-bridge.png)
 
