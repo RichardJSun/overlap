@@ -101,6 +101,15 @@
         ],
         "createdAt": "2026-11-07T21:52:46.040Z",
         "reason": "Claude: throwaway decision mockup for choosing a direction, gitignored and never shipped"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "brag-output/work/comp.html"
+        ],
+        "createdAt": "2026-11-07T22:18:11.930Z",
+        "reason": "Claude: video compositor fixture; the footage img gets its src per frame at render time"
       }
     ]
   }
