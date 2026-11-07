@@ -53,7 +53,7 @@ const pull = async () => { await runner.locator(".bk-lever").click(); await guid
 check(/locked/.test(await pull()), "the broken rule keeps the breaker locked");
 const install = async (rule) => { await guide.locator(".bk-text").fill(rule); await guide.locator(".bk-install").click(); await runner.waitForTimeout(600); };
 await install("line_clear && (load < capacity || override)");
-check((await runner.locator(".bk-rule code").textContent()) === "line_clear && (load < capacity || override)", "the guide's rule reaches the runner");
+check((await runner.locator(".bk-rule").textContent()) === "line_clear && (load < capacity || override)", "the guide's rule reaches the runner");
 check(/tripped/.test(await pull()), "without the override key the surge trips it");
 await runner.locator(".bk-key").click();
 await runner.locator(".bk-lever").click();

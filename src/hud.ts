@@ -5,17 +5,16 @@ import type { Role } from "./shared/protocol.ts";
 // Heights are load-bearing: src/scenes/fit.ts reserves 44px on top and the Guide reserves 44px below.
 const CSS = `
 .hud{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--street:#141a2e;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;
-  --tape:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;
-  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--ease:cubic-bezier(.23,1,.32,1);
-  position:absolute;inset:0;pointer-events:none;container-type:inline-size;font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
-.hud .top{position:absolute;left:0;right:0;top:0;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 0 0 12px;
+  --din:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--ease:cubic-bezier(.23,1,.32,1);--lift:0 0 2px #0b1020,0 1px 10px #0b1020,0 0 18px rgba(11,16,32,.9);
+  position:absolute;inset:0;pointer-events:none;container-type:inline-size;font:13.5px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+.hud ::selection{background:var(--amber);color:var(--night)}
+.hud .top{position:absolute;left:0;right:0;top:0;height:44px;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 0 0 14px;
   background:linear-gradient(var(--night) 0,rgba(11,16,32,.82) 60%,rgba(11,16,32,0))}
-.hud.runner .top{opacity:.78}
-.hud .role{font:700 11px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
-.hud .tape{display:inline-flex;align-items:center;gap:8px;min-width:0;height:24px;padding:0 9px;border-radius:2px;background:var(--wall);
-  box-shadow:inset 0 1px 0 rgba(232,236,255,.09),0 1px 2px rgba(0,0,0,.5);font:700 15px/1 var(--tape);font-stretch:condensed;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-.hud .tape b{font:600 11px/1 var(--mono);letter-spacing:0;color:var(--faint)}
-.hud .name{overflow:hidden;text-overflow:ellipsis;padding-top:2px}
+.hud .role{font:700 12px/1 var(--din);font-stretch:condensed;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);padding-top:2px}
+.hud .sheet{display:inline-flex;align-items:baseline;gap:9px;min-width:0;white-space:nowrap}
+.hud .sheet b{font:600 12px/1 var(--mono);color:var(--amber);font-variant-numeric:tabular-nums}
+.hud .name{overflow:hidden;text-overflow:ellipsis;font:700 17px/1 var(--din);font-stretch:condensed;letter-spacing:.1em;text-transform:uppercase;padding-top:2px}
 .hud .sp{flex:1}
 .hud .room{font:600 12px/1 var(--mono);color:var(--faint);white-space:nowrap}
 .hud .room em{font-style:normal;color:var(--dim);letter-spacing:.12em}
@@ -25,61 +24,68 @@ const CSS = `
 .hud .net.wait::before{animation:hud-breathe 1.4s ease-in-out infinite alternate}
 @keyframes hud-breathe{to{opacity:.3}}
 .hud .mute{pointer-events:auto;flex:none;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--dim);cursor:pointer;touch-action:manipulation;transition:color .15s,transform .12s var(--ease)}
-.hud .mute svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:square}
+.hud .mute svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:square}
 .hud .mute .x{display:none}.hud .mute[aria-pressed=true] .x{display:inline}.hud .mute[aria-pressed=true] .w{display:none}
 .hud .mute:active{transform:scale(.92)}
 .hud .mute:focus-visible{outline:2px solid var(--amber);outline-offset:-6px;color:var(--ink)}
 @media (hover:hover){.hud .mute:hover{color:var(--ink)}}
-.hud .intro{position:absolute;left:50%;top:52px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),560px);padding:9px 14px;
-  background:rgba(11,16,32,.9);border:1px solid var(--edge);font-size:13px;line-height:1.45;text-align:center;color:var(--ink);
-  transform:translate(-50%,0);transition:opacity .6s ease,transform .6s var(--ease)}
-.hud .intro.off{opacity:0;transform:translate(-50%,-6px)}
-.hud .intro{display:flex;gap:10px;align-items:flex-start;text-align:left}
-.hud .intro .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber);white-space:nowrap}
-.hud .toast{position:absolute;left:50%;bottom:22px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:9px 14px;
-  background:rgba(11,16,32,.92);border:1px solid var(--edge);color:var(--ink);text-align:center;line-height:1.4;
+
+/* Notes: text set straight on the sheet, labelled like a drawing note. The tutorial note gets a leader line to its tile. */
+.hud .note{position:absolute;left:50%;top:54px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 32px),500px);
+  display:flex;flex-direction:column;gap:5px;text-shadow:var(--lift);transform:translate(-50%,0);transition:opacity .3s ease,transform .4s var(--ease)}
+.hud .note.off{opacity:0;transform:translate(-50%,-6px)}
+.hud .note .lbl{align-self:flex-start;font:600 11.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--amber);
+  padding-bottom:4px;border-bottom:1px solid var(--amber);white-space:nowrap}
+.hud .note .say{text-wrap:pretty}
+.hud .intro .lbl{color:var(--dim);border-color:var(--dim)}
+.hud .lead{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke:var(--amber);stroke-width:1.4;transition:opacity .25s ease}
+.hud .lead.off{opacity:0}
+
+/* Transient messages are callouts under a dimension line. */
+.hud .toast{position:absolute;left:50%;bottom:22px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 32px),500px);padding:7px 4px 0;
+  text-align:center;text-shadow:var(--lift);border-top:1px solid rgba(232,236,255,.7);
   opacity:0;transform:translate(-50%,6px);transition:opacity .2s ease,transform .2s var(--ease)}
+.hud .toast::before,.hud .toast::after{content:"";position:absolute;top:-5px;width:1px;height:9px;background:rgba(232,236,255,.7)}
+.hud .toast::before{left:0}.hud .toast::after{right:0}
 .hud .toast.show{opacity:1;transform:translate(-50%,0)}
-.hud.guide .toast{bottom:80px}
-.hud.runner .toast{bottom:52px}
-.hud .objective{position:absolute;left:12px;bottom:14px;max-width:calc(100% - 24px);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hud.guide .objective{bottom:52px}
-.hud .objective .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
-.hud .objective.done .lbl{color:var(--green)}
-.hud .coach{position:absolute;left:50%;top:52px;box-sizing:border-box;width:max-content;max-width:min(calc(100% - 24px),520px);padding:10px 14px 10px 12px;
-  display:flex;gap:10px;align-items:flex-start;background:rgba(11,16,32,.95);border:1px solid var(--amber);box-shadow:0 0 24px rgba(255,211,138,.14);
-  font-size:13px;line-height:1.45;color:var(--ink);transform:translate(-50%,0);transition:opacity .3s ease,transform .4s var(--ease)}
-.hud .coach.off{opacity:0;transform:translate(-50%,-6px)}
-.hud .coach .lbl{flex:none;padding:3px 6px 2px;background:var(--wall);color:var(--amber)}
+.hud.runner .toast{bottom:66px}
+.hud.guide .toast{bottom:62px}
+
+/* Milestones read as a revision entered on the sheet. */
+.hud .card{position:absolute;left:50%;top:42%;box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);padding:30px 70px;text-align:center;
+  background:radial-gradient(closest-side,rgba(11,16,32,.94) 55%,rgba(11,16,32,0));opacity:0;transform:translate(-50%,-50%) scale(.97);transition:opacity .35s ease,transform .45s var(--ease)}
+.hud .card.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.hud .card h3{margin:0;font:700 30px/1 var(--din);font-stretch:condensed;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.hud .card p{margin:10px 0 0;padding-top:8px;border-top:1px solid rgba(232,236,255,.5);font:13px/1.4 var(--mono);color:var(--ink)}
+
+/* Title block: the goal, and on the Guide's screen the whole console. */
+.hud .tb{display:flex;box-sizing:border-box;border:1.5px solid var(--ink);background:rgba(11,16,32,.92)}
+.hud .cell{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;padding:0 12px;border-left:1px solid rgba(232,236,255,.45)}
+.hud .cell:first-child{border-left:0}
+.hud .k{font:600 9.5px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.hud .v{display:flex;align-items:center;gap:8px}
+.hud .obj{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.hud .objective.done .k{color:var(--green)}
+.hud.runner .objective{position:absolute;left:12px;bottom:12px;height:42px;max-width:calc(100% - 24px)}
+.hud .bottom{position:absolute;left:0;right:0;bottom:0;height:44px}
+.hud .bottom .tb{height:100%;border-width:1.5px 0 0}
+.hud .goal{flex:1}
+.hud.local .net{display:none}
+.hud .bars{display:flex;gap:8px;padding:0 4px;background:linear-gradient(var(--dim),var(--dim)) center/100% 1px no-repeat}
+.hud .bar{width:12px;height:12px;box-sizing:border-box;border:1.5px solid var(--dim);background:var(--night);transition:background-color .16s,border-color .16s}
+.hud .bar.on{background:var(--amber);border-color:var(--amber)}
+.hud .bars.flash .bar{animation:hud-deny .2s steps(1) 4}
+@keyframes hud-deny{50%{border-color:var(--red);background:var(--red)}}
+.hud .count,.hud .clock{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber)}
+.hud .clock{min-width:5ch}
+.hud .meter{width:56px;height:2px;background:repeating-linear-gradient(90deg,var(--edge) 0 4px,transparent 4px 7px);overflow:hidden;margin:5px 0}
+.hud .meter i{display:block;height:100%;background:var(--ink);transform-origin:left;transition:transform .16s var(--ease)}
+.hud .ping.charging .k{color:var(--faint)}
+.hud .ping.charging .meter i{background:var(--faint)}
 .hud .bolt{display:inline-block;width:.62em;height:.9em;margin:0 .1em;vertical-align:-.1em;background:var(--amber);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M6 0 0 8h4l-1 6 7-9H6z'/%3E%3C/svg%3E") center/contain no-repeat}
-.hud .card{position:absolute;left:50%;top:42%;box-sizing:border-box;width:max-content;max-width:calc(100% - 32px);padding:16px 26px 14px;text-align:center;
-  background:rgba(11,16,32,.94);border:1px solid var(--amber);box-shadow:0 0 40px rgba(255,211,138,.18);opacity:0;transform:translate(-50%,-50%) scale(.96);
-  transition:opacity .35s ease,transform .45s var(--ease)}
-.hud .card.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.hud .card h3{margin:0;font:700 26px/1 var(--tape);font-stretch:condensed;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
-.hud .card p{margin:8px 0 0;font-size:13px;color:var(--dim)}
-.hud .bottom{position:absolute;left:0;right:0;bottom:0;height:44px;box-sizing:border-box;padding:0 12px;display:flex;align-items:center;
-  background:var(--night);border-top:1px solid var(--edge)}
-.hud .deck{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
-.hud.local .net{display:none}
-.hud .lbl{font:700 12px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding-top:2px}
-.hud .bars{display:flex;gap:4px}
-.hud .bar{position:relative;width:16px;height:22px;box-sizing:border-box;background:var(--wall);border:1px solid var(--edge);transition:background-color .16s,border-color .16s}
-.hud .bar::after{content:"";position:absolute;left:3px;right:3px;height:6px;bottom:3px;background:var(--edge);transition:transform .16s var(--ease),background-color .16s}
-.hud .bar.on{background:rgba(255,211,138,.16);border-color:var(--amber)}
-.hud .bar.on::after{background:var(--amber);transform:translateY(-8px)}
-.hud .bars.flash .bar{animation:hud-deny .2s steps(1) 4}
-@keyframes hud-deny{50%{border-color:var(--red);background:rgba(255,77,94,.3)}}
-.hud .count{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber)}
-.hud .ping{display:flex;align-items:center;gap:8px}
-.hud .meter{width:56px;height:6px;background:var(--wall);border:1px solid var(--edge);overflow:hidden}
-.hud .meter i{display:block;height:100%;background:var(--ink);transform-origin:left;transition:transform .16s var(--ease)}
-.hud .ping.charging .lbl{color:var(--faint)}
-.hud .ping.charging .meter i{background:var(--faint)}
-.hud .clock{font:600 13px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--amber);min-width:5ch;text-align:right}
-@container (max-width:479px){.hud .role,.hud .room{display:none}.hud .coach{top:48px;padding:7px 10px;font-size:12px;line-height:1.4}.hud .intro{font-size:12px}}
+@container (max-width:479px){.hud .role,.hud .room{display:none}.hud .note{top:50px;font-size:12.5px;line-height:1.4}.hud .cell{padding:0 8px}.hud .meter{width:40px}}
 @container (max-width:339px){.hud .net{font-size:0;gap:0}}
 @media (prefers-reduced-motion:reduce){.hud *,.hud *::before,.hud *::after{animation:none!important;transition-property:opacity,background-color,border-color,color!important}}
 `;
@@ -97,6 +103,7 @@ export class Hud {
   private q = <T extends HTMLElement>(s: string) => this.el.querySelector(s) as T;
   private toastTimer = 0;
   private introTimer = 0;
+  private leadKey = "";
 
   constructor(pane: HTMLElement, readonly role: Role, room?: string, local = false) {
     if (!document.getElementById("hud-css")) {
@@ -106,9 +113,13 @@ export class Hud {
     // One screen, both roles: the connection pill would always say "connected", so it's hidden.
     this.el.className = `hud ${role}${local ? " local" : ""}`;
     this.el.innerHTML = `
-      <div class="top"><span class="role"></span><span class="tape"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
-      <div class="intro off"><span class="lbl"></span><span class="say"></span></div><div class="coach off" role="status"><span class="lbl"></span><span class="say"></span></div><div class="toast" role="status"></div><div class="objective"><span class="lbl">Goal</span><span class="obj"></span></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
-      ${role === "guide" ? `<div class="bottom"><div class="deck"><span class="lbl">Lights</span><span class="bars"></span><span class="count"></span><span class="sp"></span><span class="ping"><span class="lbl">Ping</span><span class="meter"><i></i></span></span><span class="clock"></span></div></div>` : ""}`;
+      <div class="top"><span class="role"></span><span class="sheet"><b class="num"></b><span class="name"></span></span><span class="sp"></span><span class="room"></span><span class="net wait" role="status">Connecting…</span><button class="mute" type="button" aria-label="Sound">${SPEAKER}</button></div>
+      <div class="note intro off"><span class="lbl"></span><span class="say"></span></div><div class="note coach off" role="status"><span class="lbl"></span><span class="say"></span></div>
+      <svg class="lead off" aria-hidden="true"><defs><marker id="hud-arrow-${role}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" fill="#ffd38a" stroke="none"/></marker></defs><path class="ld" marker-end="url(#hud-arrow-${role})"/><circle r="13"/></svg>
+      <div class="toast" role="status"></div><div class="card" aria-live="polite"><h3></h3><p></p></div>
+      ${role === "guide"
+        ? `<div class="bottom"><div class="tb"><div class="cell goal objective"><span class="k">Goal</span><span class="obj"></span></div><div class="cell"><span class="k">Lights</span><span class="v"><span class="bars"></span><span class="count"></span></span></div><div class="cell ping"><span class="k">Ping</span><span class="meter"><i></i></span></div><div class="cell"><span class="k">Time</span><span class="clock"></span></div></div></div>`
+        : `<div class="objective tb"><div class="cell"><span class="k">Goal</span><span class="obj"></span></div></div>`}`;
     this.q(".role").textContent = role === "runner" ? "Runner" : "Guide";
     if (room) {
       const r = this.q(".room");
@@ -179,14 +190,34 @@ export class Hud {
     this.q(".objective").classList.toggle("done", done);
   }
 
-  /** Tutorial coach box under the top bar; null hides it. While it shows, the district intro stays hidden. */
+  /** Tutorial note under the top bar; null hides it. While it shows, the district intro stays hidden. */
   coach(text: string | null, label = "") {
     const el = this.q(".coach");
     el.classList.toggle("off", !text);
-    if (!text) return;
+    if (!text) return this.leader(null);
     this.q(".intro").classList.add("off");
-    el.querySelector(".lbl")!.textContent = label;
+    el.querySelector(".lbl")!.textContent = label === "Tip" || !label ? "Note" : `Note ${label}`;
     withBolts(el.querySelector(".say")!, text);
+  }
+
+  /** Draws the note's leader line to a point in pane pixels (the tile the note is about); null hides it. */
+  leader(p: { x: number; y: number } | null) {
+    const svg = this.q(".lead") as unknown as SVGSVGElement;
+    const note = this.q(".coach");
+    const key = p && !note.classList.contains("off") ? `${Math.round(p.x)},${Math.round(p.y)},${note.offsetWidth},${note.offsetHeight}` : "";
+    if (key === this.leadKey) return;
+    this.leadKey = key;
+    svg.classList.toggle("off", !key);
+    if (!p || !key) return;
+    const pane = this.el.getBoundingClientRect(), r = note.getBoundingClientRect();
+    const left = r.left - pane.left, bottom = r.bottom - pane.top + 6;
+    // A short shoulder under the note, then a straight run that stops at the ring around the tile.
+    const sx = Math.min(Math.max(p.x, left + 14), left + r.width - 14), sy = bottom + 8;
+    const d = Math.hypot(p.x - sx, p.y - sy), k = d > 18 ? (d - 16) / d : 0;
+    svg.querySelector(".ld")!.setAttribute("d", `M${sx} ${bottom}V${sy}L${(sx + (p.x - sx) * k).toFixed(1)} ${(sy + (p.y - sy) * k).toFixed(1)}`);
+    const ring = svg.querySelector("circle")!;
+    ring.setAttribute("cx", p.x.toFixed(1));
+    ring.setAttribute("cy", p.y.toFixed(1));
   }
 
   /** A short centered card for milestones, e.g. a district restored. */

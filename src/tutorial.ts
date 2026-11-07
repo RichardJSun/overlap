@@ -62,13 +62,10 @@ export class Tutor {
   private shown?: Step;
   private hintUntil = 0;
   private seenHints = new Set<Step>();
-  private pointer: Phaser.GameObjects.Image;
   private holdUntil = -1; // district 1 lets the radio call play before the first step
   private hold = 0;
 
-  constructor(private scene: Phaser.Scene, private hud: Hud, private role: Role) {
-    this.pointer = scene.add.image(0, 0, "pointer").setDepth(40).setVisible(false);
-  }
+  constructor(private scene: Phaser.Scene, private hud: Hud, private role: Role) {}
 
   setDistrict(di: number) {
     this.tutorial = di === 0;
@@ -97,14 +94,9 @@ export class Tutor {
     }
     const t0 = step?.target?.(c);
     const t = t0 && c.visible(t0) ? t0 : undefined;
-    this.pointer.setVisible(!!t);
-    if (t && (this.pointer.getData("tx") !== t.x || this.pointer.getData("ty") !== t.y)) {
-      // Re-seat the bounce over the new target tile.
-      this.pointer.setData({ tx: t.x, ty: t.y });
-      this.scene.tweens.killTweensOf(this.pointer);
-      this.pointer.setPosition(t.x * TILE + TILE / 2, t.y * TILE - 6);
-      this.scene.tweens.add({ targets: this.pointer, y: "-=8", duration: 420, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-    }
+    // The note's leader line ends on the tile, in pane pixels.
+    const cam = this.scene.cameras.main;
+    this.hud.leader(t ? { x: (t.x * TILE + TILE / 2 - cam.worldView.x) * cam.zoom, y: (t.y * TILE + TILE / 2 - cam.worldView.y) * cam.zoom } : null);
   }
 
   private show(step: Step | undefined, label = "") {
@@ -112,5 +104,5 @@ export class Tutor {
     this.hud.coach(step?.text ?? null, label);
   }
 
-  destroy() { this.pointer.destroy(); }
+  destroy() { this.hud.leader(null); }
 }

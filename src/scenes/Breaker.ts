@@ -12,63 +12,69 @@ import type { RunStats } from "./Runner.ts";
 export type BreakerData = SceneData & { role: Role; stats?: RunStats; lantern?: ColorMask; rule?: string };
 
 const CSS = `
-.bk{--night:#0b1020;--wall:#1b2238;--edge:#2c3758;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;
-  --tape:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  position:absolute;inset:0;display:flex;overflow:auto;padding:124px 12px 16px;box-sizing:border-box;font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);transition:opacity .6s ease}
+.bk{--night:#0b1020;--edge:#2c3758;--amber:#ffd38a;--red:#ff4d5e;--green:#4dff88;--ink:#e8ecff;--dim:#a9b1d6;--faint:#7d87b2;--line:rgba(232,236,255,.45);
+  --din:"DIN Condensed","Bahnschrift","Roboto Condensed","Arial Narrow",sans-serif-condensed,system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  position:absolute;inset:0;display:flex;overflow:auto;padding:124px 12px 16px;box-sizing:border-box;font:13.5px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+  background-color:var(--night);background-image:linear-gradient(rgba(44,55,88,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(44,55,88,.3) 1px,transparent 1px);background-size:32px 32px;transition:opacity .6s ease}
+.bk ::selection{background:var(--amber);color:var(--night)}
 .bk.gone{opacity:0}
-.bk-panel{margin:auto;width:min(100%,540px);box-sizing:border-box;padding:14px 16px 16px;background:rgba(11,16,32,.94);border:1px solid var(--edge)}
-.bk header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.bk-tag,.bk h4{font:700 13px/1 var(--tape);font-stretch:condensed;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);padding-top:2px}
-.bk h4{margin:14px 0 6px;color:var(--dim)}
-.bk-state{margin-left:auto;padding:3px 7px 2px;background:var(--wall);font:700 12px/1 var(--tape);letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.bk-panel{margin:auto;width:min(100%,560px);box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+.bk.runner .bk-panel{background:radial-gradient(ellipse 70% 60% at 50% 40%,var(--glow),transparent 72%)}
+.bk-tb{display:flex;border:1.5px solid var(--ink);background:var(--night)}
+.bk-cell{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;padding:9px 12px;box-shadow:inset -1px 0 0 var(--line)}
+.bk-cell:last-child{box-shadow:none}
+.bk-k{font:600 9.5px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.bk-v{font:700 18px/1 var(--din);font-stretch:condensed;letter-spacing:.08em;text-transform:uppercase;padding-top:2px}
+.bk-state{color:var(--red)}
 .bk.closed .bk-state{color:var(--green)}
-.bk p{margin:0 0 10px;color:var(--dim)}
+.bk ol{margin:0;padding:0 0 0 26px;display:grid;gap:6px;color:var(--dim)}
+.bk ol li::marker{font:600 12px var(--mono);color:var(--amber)}
+.bk ol b{color:var(--ink);font-weight:600}
 .bk code{font:13px/1.3 var(--mono);color:var(--ink)}
-.bk button{font:700 14px/1 var(--tape);font-stretch:condensed;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;
-  min-height:44px;padding:0 16px;border:1px solid var(--edge);background:var(--wall);color:var(--ink);transition:transform .12s cubic-bezier(.23,1,.32,1),border-color .15s,background-color .15s}
+.bk-diagram{display:block;width:100%;height:auto;overflow:visible}
+.bk-blade{transform-box:view-box;transform-origin:110px 70px;transition:transform .5s cubic-bezier(.34,1.4,.64,1)}
+.bk.closed .bk-blade{transform:rotate(32deg)}
+.bk.trip .bk-redarc{animation:bk-flash .18s steps(1) 4}
+@keyframes bk-flash{50%{stroke:var(--ink)}}
+.bk.trip .bk-panel{animation:bk-shake .3s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bk-shake{20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.bk button{font:700 17px/1 var(--din);font-stretch:condensed;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;
+  min-height:52px;padding:2px 18px 0;border:0;background:transparent;color:var(--ink);transition:transform .12s cubic-bezier(.23,1,.32,1),background-color .15s,color .15s}
 .bk button:active:not(:disabled){transform:scale(.97)}
-.bk button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.bk button:focus-visible{outline:2px solid var(--amber);outline-offset:-4px}
 .bk button:disabled{cursor:not-allowed;color:var(--faint)}
-.bk.runner{background:radial-gradient(ellipse 60% 55% at 50% 58%,var(--glow),transparent 70%)}
-.bk-dials{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;align-items:stretch}
-.bk-gauge{margin:0;padding:8px 10px 10px;background:#070a14;border:1px solid var(--edge);text-align:center}
-.bk-gauge svg{display:block;width:100%;max-width:220px;margin:0 auto}
-.bk-gauge figcaption,.bk-plate{font:700 12px/1 var(--tape);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.bk-read{display:block;margin-top:4px;font:600 22px/1 var(--mono);letter-spacing:0;color:var(--red);font-variant-numeric:tabular-nums}
-.bk-side{display:grid;gap:10px}
-.bk-plate,.bk-lamp{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:10px;background:#070a14;border:1px solid var(--edge)}
-.bk-plate b{font:600 22px/1 var(--mono);letter-spacing:0;color:var(--ink)}
-.bk-lamp{flex-direction:row;align-items:center;gap:10px;font:700 12px/1 var(--tape);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.bk-lamp i{width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
-.bk-note{margin-top:12px!important;padding:8px 10px;border-left:3px solid var(--amber);background:rgba(255,211,138,.06);color:var(--ink)!important}
-.bk-controls{display:flex;gap:10px;flex-wrap:wrap}
-.bk-key[aria-pressed=true]{border-color:var(--amber);background:rgba(255,211,138,.16);color:var(--amber)}
-.bk-lever{flex:1;border-color:var(--amber)!important}
+.bk-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+.bk-controls button+button{border-left:1px solid var(--line)}
+.bk-key[aria-pressed=true]{color:var(--night);background:var(--amber)}
+.bk-lever{box-shadow:inset 0 0 0 1.5px var(--red);background:rgba(255,77,94,.08)!important}
+@media (hover:hover){.bk-lever:hover{background:rgba(255,77,94,.18)!important}.bk-install:not(:disabled):hover{background:rgba(255,211,138,.14)}}
 .bk-lever.pulled{transform:translateY(3px)}
-.bk-rule{margin:12px 0 0!important;font-size:12px}
-.bk-rule span{display:block;margin-bottom:3px;font:700 11px/1 var(--tape);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
-.bk textarea{display:block;width:100%;box-sizing:border-box;min-height:56px;padding:8px 10px;resize:vertical;font:16px/1.35 var(--mono);color:var(--ink);
-  background:#070a14;border:1px solid var(--edge);caret-color:var(--amber)}
-.bk textarea:focus{outline:none;border-color:var(--amber)}
-.bk-err{min-height:1.45em;margin:6px 0 8px!important;color:var(--red)!important}
-.bk-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.bk-install:not(:disabled){border-color:var(--amber)}
-.bk-installed{font-size:12px;color:var(--faint)}
-.bk ul,.bk ol{margin:0;padding:0;list-style:none;display:grid;gap:5px}
-.bk-vars li{display:grid;grid-template-columns:11ch 4ch 1fr;gap:8px;align-items:baseline;color:var(--dim)}
-.bk-vars em{font:12px/1 var(--mono);font-style:normal;color:var(--faint)}
-.bk-tests li{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;align-items:baseline;padding:6px 8px;background:#070a14;border:1px solid var(--edge)}
-.bk-tests li small{grid-column:2/4;font:12px/1.3 var(--mono);color:var(--faint)}
-.bk-tests li b{font:700 12px/1 var(--tape);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.bk-tests .mark::before{content:"·";color:var(--faint)}
-.bk-tests .pass .mark::before{content:"✓";color:var(--green)}
-.bk-tests .fail .mark::before{content:"✗";color:var(--red)}
-.bk-tests .fail{border-color:rgba(255,77,94,.5)}
-.bk-last{min-height:1.45em;margin:10px 0 0!important;color:var(--ink)!important}
+.bk-text{display:block;width:100%;box-sizing:border-box;min-height:58px;padding:6px 2px;resize:vertical;font:16px/1.4 var(--mono);color:var(--ink);background:transparent;
+  border:0;border-bottom:1.5px solid var(--ink);border-radius:0;caret-color:var(--amber)}
+.bk-text:focus{outline:none;border-bottom-color:var(--amber)}
+.bk-err{min-height:1.45em;margin:0;color:var(--red)}
+.bk-row{display:flex;align-items:stretch;border:1.5px solid var(--ink)}
+.bk-install{border-right:1px solid var(--line)!important}
+.bk-installed{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:6px 12px;min-width:0}
+.bk-installed code{overflow-wrap:anywhere}
+.bk-vars{display:grid;grid-template-columns:auto auto 1fr;gap:4px 14px;margin:0;color:var(--dim)}
+.bk-vars dt{font:600 13px var(--mono);color:var(--ink)}
+.bk-vars dd{margin:0}
+.bk-vars .t{font:12px var(--mono);color:var(--faint)}
+.bk-tests{border-collapse:collapse;width:100%;border:1.5px solid var(--ink)}
+.bk-tests td,.bk-tests th{padding:7px 10px;border-top:1px solid var(--line);text-align:left;vertical-align:baseline}
+.bk-tests th{font:600 9.5px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);border-top:0}
+.bk-tests small{display:block;margin-top:3px;font:11.5px/1.3 var(--mono);color:var(--faint)}
+.bk-tests .exp{font:700 13px/1 var(--din);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.bk-tests .mark{width:14px;font:700 15px var(--mono);color:var(--faint)}
+.bk-tests .mark::before{content:"·"}
+.bk-tests .pass .mark{color:var(--green)}.bk-tests .pass .mark::before{content:"✓"}
+.bk-tests .fail .mark{color:var(--red)}.bk-tests .fail .mark::before{content:"✗"}
+.bk-last{min-height:1.45em;margin:0;color:var(--ink)}
+.bk-last:not(:empty)::before{content:"NOTE";margin-right:10px;font:600 11px var(--mono);letter-spacing:.06em;color:var(--amber);border-bottom:1px solid var(--amber)}
 .hud.breaker .objective,.hud.breaker .bottom{display:none}
 .hud.breaker .toast{bottom:22px}
-@media (max-width:420px){.bk-dials{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.bk,.bk *{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.bk,.bk *{transition:none!important;animation:none!important}}
 `;
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -132,29 +138,35 @@ export class BreakerScene extends Phaser.Scene {
   private q<T extends HTMLElement>(s: string) { return this.root.querySelector(s) as T; }
 
   private runnerPanel(alive: { on: boolean }) {
-    this.root.style.setProperty("--glow", rgba(hex(this.info.lantern ?? LEVELS.at(-1)!.lantern), 0.24));
-    const redFrom = needle(Number(LIVE.capacity)) * (Math.PI / 180);
-    const [rx, ry] = [60 + 48 * Math.sin(redFrom), 62 - 48 * Math.cos(redFrom)];
+    this.root.style.setProperty("--glow", rgba(hex(this.info.lantern ?? LEVELS.at(-1)!.lantern), 0.14));
+    // The load gauge is an instrument on the diagram: a 0-150 MW arc, red past capacity.
+    const at = (mw: number, r: number) => { const a = (needle(mw) * Math.PI) / 180; return [330 + r * Math.sin(a), 150 - r * Math.cos(a)].map((n) => n.toFixed(1)).join(" "); };
     this.root.innerHTML = `<section class="bk-panel" aria-label="Main breaker">
-      <header><span class="bk-tag">Main breaker</span><span class="bk-state">Open</span></header>
-      <p>Read these gauges to your Guide. <b>K</b> turns the override key. <b>Space</b> pulls the lever.</p>
-      <div class="bk-dials">
-        <figure class="bk-gauge"><svg viewBox="0 0 120 70" aria-hidden="true">
-          <path d="M12 62A48 48 0 0 1 108 62" fill="none" stroke="#2c3758" stroke-width="6"/>
-          <path d="M${rx.toFixed(2)} ${ry.toFixed(2)}A48 48 0 0 1 108 62" fill="none" stroke="#ff4d5e" stroke-width="6"/>
-          <line class="bk-needle" x1="60" y1="62" x2="60" y2="20" stroke="#e8ecff" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="60" cy="62" r="4" fill="#e8ecff"/>
-        </svg><figcaption>Load<span class="bk-read">${LIVE.load} MW</span></figcaption></figure>
-        <div class="bk-side">
-          <div class="bk-plate">Capacity<b>${LIVE.capacity} MW</b></div>
-          <div class="bk-lamp"><i></i>Line clear</div>
-        </div>
-      </div>
-      <p class="bk-note">Restart surge. If the load runs over capacity, turn the override key, then close the breaker.</p>
-      <div class="bk-controls"><button class="bk-key" type="button" aria-pressed="false">Override key off</button><button class="bk-lever" type="button">Pull the lever</button></div>
-      <p class="bk-rule"><span>Rule from dispatch</span><code></code></p>
+      <div class="bk-tb"><div class="bk-cell" style="flex:1"><span class="bk-k">Detail B</span><span class="bk-v">Main breaker</span></div><div class="bk-cell"><span class="bk-k">State</span><span class="bk-v bk-state">Open</span></div></div>
+      <svg class="bk-diagram" viewBox="0 0 480 236" fill="none" stroke="#e8ecff" stroke-width="1.5" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" aria-hidden="true">
+        <text x="0" y="16" fill="#a9b1d6" stroke="none" font-family="system-ui,sans-serif" font-size="11" letter-spacing="1.6">MAIN LINE</text>
+        <path d="M0 26H480"/>
+        <path d="M110 26V70"/><circle cx="110" cy="70" r="3" fill="#e8ecff"/>
+        <path class="bk-blade" d="M110 70L130 102" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="110" cy="108" r="3" fill="#e8ecff"/><path d="M110 108V150H40"/><path d="M40 144l-10 6 10 6" fill="#e8ecff" stroke="none"/>
+        <text x="132" y="78" fill="#a9b1d6" stroke="none">CB-1</text><text x="20" y="176" fill="#a9b1d6" stroke="none">TO THE CITY</text>
+        <path d="M330 26V82" stroke-dasharray="4 4" stroke="#7d87b2"/>
+        <path d="M${at(0, 58)}A58 58 0 0 1 ${at(Number(LIVE.capacity), 58)}" stroke="#2c3758" stroke-width="6"/>
+        <path class="bk-redarc" d="M${at(Number(LIVE.capacity), 58)}A58 58 0 0 1 ${at(150, 58)}" stroke="#ff4d5e" stroke-width="6"/>
+        <line class="bk-needle" x1="330" y1="150" x2="330" y2="100" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="330" cy="150" r="4" fill="#e8ecff"/>
+        <text x="330" y="180" text-anchor="middle" fill="#a9b1d6" stroke="none" font-family="system-ui,sans-serif" font-size="11" letter-spacing="1.6">LOAD</text>
+        <text x="330" y="206" text-anchor="middle" fill="#ff4d5e" stroke="none" font-size="22" font-weight="600">${LIVE.load} MW</text>
+        <text x="330" y="226" text-anchor="middle" fill="#a9b1d6" stroke="none">CAPACITY ${LIVE.capacity} MW</text>
+        <path d="M450 26V96"/><circle cx="450" cy="112" r="16" stroke="#4dff88"/><path d="M439 101l22 22M461 101l-22 22" stroke="#4dff88"/>
+        <text x="450" y="148" text-anchor="middle" fill="#a9b1d6" stroke="none">LINE</text><text x="450" y="162" text-anchor="middle" fill="#a9b1d6" stroke="none">CLEAR</text>
+      </svg>
+      <ol><li>Read these gauges to your Guide. <b>K</b> turns the override key. <b>Space</b> pulls the lever.</li>
+        <li><b>Restart surge.</b> If the load runs over capacity, turn the override key, then close the breaker.</li></ol>
+      <div class="bk-tb bk-controls"><button class="bk-key" type="button" aria-pressed="false">Override key off</button><button class="bk-lever" type="button">Pull the lever</button></div>
+      <div class="bk-tb"><div class="bk-cell" style="flex:1"><span class="bk-k">Rule from dispatch</span><code class="bk-rule"></code></div></div>
     </section>`;
-    this.q(".bk-rule code").textContent = this.rule;
+    this.q(".bk-rule").textContent = this.rule;
     this.q<HTMLButtonElement>(".bk-key").onclick = () => this.turnKey();
     this.q<HTMLButtonElement>(".bk-lever").onclick = () => this.pullLever();
     const onKey = (e: KeyboardEvent) => {
@@ -165,12 +177,19 @@ export class BreakerScene extends Phaser.Scene {
     };
     window.addEventListener("keydown", onKey);
     this.events.once("shutdown", () => window.removeEventListener("keydown", onKey));
-    // The needle never sits quite still under a surge.
+    // Meter ballistics: the needle has mass, swings up from zero, overshoots, and trembles under the surge.
     const line = this.q(".bk-needle");
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let mw = reduce ? Number(LIVE.load) : 0, v = 0, last = -1;
     this.events.on("update", (t: number) => {
       if (!alive.on) return;
-      const mw = this.done ? 96 : Number(LIVE.load) + Math.sin(t / 170) * 0.7 + Math.sin(t / 53) * 0.4;
-      line.setAttribute("transform", `rotate(${needle(mw).toFixed(2)} 60 62)`);
+      const dt = last < 0 ? 0 : Math.min(0.05, (t - last) / 1000);
+      last = t;
+      const target = (this.done ? 96 : Number(LIVE.load)) + (reduce ? 0 : Math.sin(t / 170) * 0.7 + Math.sin(t / 53) * 0.4);
+      v += ((target - mw) * 60 - v * 9) * dt;
+      mw += v * dt;
+      if (reduce) mw = target;
+      line.setAttribute("transform", `rotate(${needle(mw).toFixed(2)} 330 150)`);
     });
   }
 
@@ -194,7 +213,9 @@ export class BreakerScene extends Phaser.Scene {
     this.time.delayedCall(260, () => lever.classList.remove("pulled"));
     if (result === "closed") return this.close();
     sfx.denied();
-    this.cameras.main.shake(200, 0.006);
+    this.root.classList.remove("trip");
+    void this.root.offsetWidth;
+    this.root.classList.add("trip");
     this.hud.toast(result === "locked"
       ? "It won't move. The breaker is locked because its rule fails a safety test. Ask your Guide to fix it."
       : `It tripped${this.key ? ", even with the override key on" : ""}. Load reads ${LIVE.load} MW, over the ${LIVE.capacity} MW capacity.`, 4500);
@@ -221,17 +242,17 @@ export class BreakerScene extends Phaser.Scene {
   }
 
   private guidePanel() {
-    const vars = VARIABLES.map((v) => `<li><code>${v.name}</code><em>${v.type}</em><span>${esc(v.about)}</span></li>`).join("");
-    const tests = TESTS.map((t) => `<li><i class="mark"></i><span>${esc(t.name)}</span><b>${t.close ? "Must close" : "Must stay open"}</b>
-      <small>${Object.entries(t.r).map(([k, v]) => `${k} ${v}`).join(" · ")}</small></li>`).join("");
+    const vars = VARIABLES.map((v) => `<dt>${v.name}</dt><dd class="t">${v.type}</dd><dd>${esc(v.about)}</dd>`).join("");
+    const tests = TESTS.map((t) => `<tr><td class="mark"></td><td>${esc(t.name)}<small>${Object.entries(t.r).map(([k, v]) => `${k} ${v}`).join(" · ")}</small></td><td class="exp">${t.close ? "Must close" : "Must stay open"}</td></tr>`).join("");
     this.root.innerHTML = `<section class="bk-panel" aria-label="Main breaker rule">
-      <header><span class="bk-tag">Main breaker rule</span><span class="bk-state">No camera</span></header>
-      <p>There's no camera at the breaker. It closes when this rule comes out true. Fix the rule so every safety test passes, then install it. Only the Runner can read the live gauges.</p>
-      <textarea class="bk-text" rows="2" maxlength="${MAX_RULE}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Breaker rule"></textarea>
+      <div class="bk-tb"><div class="bk-cell" style="flex:1"><span class="bk-k">Detail B</span><span class="bk-v">Main breaker rule</span></div><div class="bk-cell"><span class="bk-k">Breaker</span><span class="bk-v bk-state">Open</span></div></div>
+      <ol><li>There's no camera at the breaker. It closes when this rule comes out true.</li><li>Fix the rule so every safety test passes, then install it. Only the Runner can read the live gauges.</li></ol>
+      <label class="bk-k" for="bk-text">Rule</label>
+      <textarea id="bk-text" class="bk-text" rows="2" maxlength="${MAX_RULE}" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
       <p class="bk-err" role="alert"></p>
-      <div class="bk-row"><button class="bk-install" type="button">Install rule</button><span class="bk-installed">Installed: <code></code></span></div>
-      <h4>Readings</h4><ul class="bk-vars">${vars}</ul>
-      <h4>Safety tests</h4><ol class="bk-tests">${tests}</ol>
+      <div class="bk-row"><button class="bk-install" type="button">Install rule</button><span class="bk-installed"><span class="bk-k">Installed</span><code></code></span></div>
+      <dl class="bk-vars">${vars}</dl>
+      <table class="bk-tests"><thead><tr><th></th><th>Safety test</th><th>Expect</th></tr></thead><tbody>${tests}</tbody></table>
       <p class="bk-last" role="status"></p>
     </section>`;
     const text = this.q<HTMLTextAreaElement>(".bk-text"), install = this.q<HTMLButtonElement>(".bk-install");
@@ -240,9 +261,9 @@ export class BreakerScene extends Phaser.Scene {
     const refresh = () => {
       const c = check(text.value);
       this.q(".bk-err").textContent = c.error ?? "";
-      this.root.querySelectorAll(".bk-tests li").forEach((li, i) => {
-        li.classList.toggle("pass", !c.error && c.pass[i] === true);
-        li.classList.toggle("fail", !c.error && c.pass[i] === false);
+      this.root.querySelectorAll(".bk-tests tbody tr").forEach((tr, i) => {
+        tr.classList.toggle("pass", !c.error && c.pass[i] === true);
+        tr.classList.toggle("fail", !c.error && c.pass[i] === false);
       });
       install.disabled = !safe(c) || text.value === this.rule;
       install.title = safe(c) ? "" : "Pass every safety test first";
@@ -268,7 +289,7 @@ export class BreakerScene extends Phaser.Scene {
       case "rule":
         if (this.info.role !== "runner" || typeof m.rule !== "string") return;
         this.rule = m.rule.slice(0, MAX_RULE);
-        this.q(".bk-rule code").textContent = this.rule;
+        this.q(".bk-rule").textContent = this.rule;
         if (!this.info.local) sfx.ping();
         this.hud.toast("Dispatch installed a new rule.");
         return;

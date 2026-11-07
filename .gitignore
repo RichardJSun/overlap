@@ -12,3 +12,4 @@ playwright-report/
 .claude/.cc-writes
 .claude/worktrees/
 docs/demo.mp4
+.impeccable/mocks/
