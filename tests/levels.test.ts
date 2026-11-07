@@ -55,6 +55,13 @@ describe("district data", () => {
     level.gates.forEach((g, i) => {
       it(`${name} needs the ${g.kind} at ${g.x},${g.y}`, () => expect(solve(withoutGate(level, i))).toBe(-1));
     });
+
+    level.filters.forEach((f, i) => {
+      it(`${name} needs the filter at ${f.x},${f.y}`, () => {
+        const n = solve(loadLevel({ ...level, filters: level.filters.filter((_, k) => k !== i) }));
+        expect(n === -1 || n > solve(level), `solved in ${n} without it`).toBe(true);
+      });
+    });
   });
 
   it("district 3 needs both lights on at once for the cyan bridge", () => {
